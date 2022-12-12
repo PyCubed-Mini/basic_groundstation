@@ -12,6 +12,7 @@ commands_by_name = {
     {"bytes": cb, "will_respond": commands[cb]["will_respond"], "has_args": commands[cb]["has_args"]}
     for cb in commands.keys()}
 
+
 async def send_command(radio, command_bytes, args, will_respond, debug=False):
     success = False
     response = None
@@ -33,9 +34,10 @@ async def send_command(radio, command_bytes, args, will_respond, debug=False):
         success = False
     return success, header, response
 
+
 async def move_file(radio, source_path, destination_path, debug=False):
     arg_string = json.dumps([source_path, destination_path])
-    success, _, response = send_command(
+    success, _, response = await send_command(
         radio,
         commands_by_name["MOVE_FILE"]["bytes"],
         arg_string,
@@ -55,8 +57,9 @@ async def move_file(radio, source_path, destination_path, debug=False):
 
     return success
 
+
 async def request_file(radio, path, debug=False):
-    success, header, response = send_command(
+    success, header, response = await send_command(
         radio,
         commands_by_name["REQUEST_FILE"]["bytes"],
         path,
@@ -74,14 +77,30 @@ async def request_file(radio, path, debug=False):
 
     return success, header, response
 
+
 async def upload_file(radio, local_path, satellite_path, debug=False):
     msg = DiskBufferedMessage(0, local_path)
 
-    success = send_message(radio, msg, debug=debug)
+    success = await send_message(radio, msg, debug=debug)
 
     if success:
         success &= await move_file(radio, "/sd/disk_buffered_message", satellite_path, debug=debug)
     return success
+
+
+async def request_beacon(radio, debug=False):
+    success, header, response = await send_command(
+        radio,
+        commands_by_name["REQUEST_BEACON"]["bytes"],
+        "",
+        commands_by_name["REQUEST_BEACON"]["will_respond"],
+        debug=debug)
+
+    if success and header == headers.BEACON:
+        return True, beacon_str(response)
+    else:
+        return False, None
+
 
 async def receive(rfm9x, with_ack=True):
     """Recieve a packet.  Returns None if no packet was received.
@@ -90,6 +109,7 @@ async def receive(rfm9x, with_ack=True):
     if packet is None:
         return None
     return packet[0:6], packet[6:]
+
 
 async def send_message(radio, msg, debug=False):
     success = True
@@ -115,6 +135,7 @@ async def send_message(radio, msg, debug=False):
 
     return success
 
+
 class _data:
 
     def __init__(self):
@@ -122,6 +143,7 @@ class _data:
         self.msg_last = bytes([])
         self.cmsg = bytes([])
         self.cmsg_last = bytes([])
+
 
 async def wait_for_message(radio):
     data = _data()
@@ -145,26 +167,30 @@ async def wait_for_message(radio):
             if oh == headers.DISK_BUFFERED_END:
                 return headers.DISK_BUFFERED_START, data.cmsg
 
+
 def print_message(header, message):
     if header == headers.DEFAULT:
         print(f"Default: {message}")
     elif header == headers.BEACON:
-        print_beacon(message)
+        print(beacon_str(message))
     elif header == headers.MEMORY_BUFFERED_START or header == headers.DISK_BUFFERED_START:
         print(f"Buffered:\n\t{message}")
     else:
         print(f"Unknown: {message}")
 
-def print_beacon(beacon):
+
+def beacon_str(beacon):
     beacon_dict = unpack_beacon(beacon)
-    print(f"\n{bold}Beacon:{normal}")
+    bs = "\n{bold}Beacon:{normal}"
     for bk in beacon_dict:
         bv = beacon_dict[bk]
         if isinstance(bv, float):
             bvstr = f"{bv:.4}"
         else:
             bvstr = str(bv)
-        print(f"\t{bk:.<35}" + " " + bvstr)
+        bs += f"\t{bk:.<35}" + " " + bvstr
+    return bs
+
 
 def handle_memory_buffered(header, data, payload):
     if header == headers.MEMORY_BUFFERED_START:
