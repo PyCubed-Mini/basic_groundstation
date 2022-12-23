@@ -36,6 +36,11 @@ radio = initialize_radio(cs, reset)
 
 print_radio_configuration(radio)
 
+if get_input_discrete(
+        f"Change radio parameters? {bold}(y/N){normal}", ["", "y", "n"]) == "y":
+    manually_configure_radio(radio)
+    print_radio_configuration(radio)
+
 
 def human_time_stamp():
     """Returns a human readable time stamp in the format: 'year.month.day hour:min'
