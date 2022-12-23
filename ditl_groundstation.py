@@ -4,6 +4,8 @@ part of a day in the life test.
 
 Only meant to run on raspberry pi.
 """
+import sys
+sys.path.append("lib")
 import time
 import tasko
 
