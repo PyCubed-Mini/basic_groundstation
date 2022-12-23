@@ -166,6 +166,9 @@ async def wait_for_message(radio):
             handle_disk_buffered(oh, data, payload)
             if oh == headers.DISK_BUFFERED_END:
                 return headers.DISK_BUFFERED_START, data.cmsg
+        else:
+            print(f"Unrecognized header {oh}")
+            return oh, payload
 
 
 def print_message(header, message):
