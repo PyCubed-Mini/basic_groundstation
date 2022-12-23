@@ -24,6 +24,7 @@ def get_loop(debug=tasko_logging):
         __global_event_loop = Loop(debug=debug)
     return __global_event_loop
 
+
 dbg = get_loop().dbg
 
 
@@ -35,3 +36,29 @@ sleep = get_loop().sleep
 suspend = get_loop().suspend
 
 run = get_loop().run
+
+
+def reset():
+    """
+    Reset the global event loop
+    """
+    global __global_event_loop
+    global dbg
+    global add_task
+    global run_later
+    global schedule
+    global schedule_later
+    global sleep
+    global suspend
+    global run
+
+    __global_event_loop = None
+    dbg = get_loop().dbg
+    add_task = get_loop().add_task
+    run_later = get_loop().run_later
+    schedule = get_loop().schedule
+    schedule_later = get_loop().schedule_later
+    sleep = get_loop().sleep
+    suspend = get_loop().suspend
+
+    run = get_loop().run
