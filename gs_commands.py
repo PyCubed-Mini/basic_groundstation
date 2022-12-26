@@ -13,7 +13,7 @@ commands_by_name = {
     for cb in commands.keys()}
 
 
-async def send_command(radio, command_bytes, args, will_respond, debug=False):
+async def send_command(radio, command_bytes, args, will_respond, max_rx_fails=10, debug=False):
     success = False
     response = None
     header = None
@@ -24,10 +24,15 @@ async def send_command(radio, command_bytes, args, will_respond, debug=False):
         if will_respond:
             if debug:
                 print('Waiting for response')
-            header, response = await wait_for_message(radio)
-            if debug:
-                print_message(type, response)
-        success = True
+            header, response = await wait_for_message(radio, max_rx_fails=10)
+            if header is not None:
+                success = True
+                if debug:
+                    print_message(header, response)
+            else:
+                success = False
+        else:
+            success = True
     else:
         if debug:
             print('Failed to send command')
@@ -145,13 +150,23 @@ class _data:
         self.cmsg_last = bytes([])
 
 
-async def wait_for_message(radio):
+async def wait_for_message(radio, max_rx_fails=10):
     data = _data()
 
+    rx_fails = 0
     while True:
         res = await receive(radio)
+
         if res is None:
-            continue
+            rx_fails += 1
+            if rx_fails > max_rx_fails:
+                print("wait_for_message: max_rx_fails hit")
+                return None, None
+            else:
+                continue
+        else:
+            rx_fails = 0
+
         header, payload = res
 
         oh = header[5]
