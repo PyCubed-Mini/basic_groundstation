@@ -15,6 +15,8 @@ from radio_utils.message import Message
 import json
 import supervisor
 from logs import beacon_packet
+import msgpack
+from io import BytesIO
 
 NO_OP = b'\x00\x00'
 HARD_RESET = b'\x00\x01'
@@ -28,6 +30,13 @@ COPY_FILE = b'\x00\x09'
 DELETE_FILE = b'\x00\x10'
 RELOAD = b'\x00\x11'
 REQUEST_BEACON = b'\x00\x12'
+GET_RTC = b'\x00\x13'
+SET_RTC_UTIME = b'\x00\x14'
+GET_RTC_UTIME = b'\x00\x15'
+
+
+COMMAND_ERROR_PRIORITY = 9
+BEACON_PRIORITY = 10
 
 def noop(self):
     """No operation"""
@@ -64,7 +73,7 @@ def request_file(task, file):
     :type file: str"""
     file = str(file, 'utf-8')
     if file_exists(file):
-        tq.push(DiskBufferedMessage(1, file))
+        tq.push(DiskBufferedMessage(file))
     else:
         task.debug(f'File not found: {file}')
         tq.push(Message(9, b'File not found', with_ack=True))
@@ -102,7 +111,7 @@ def move_file(task, args):
         tq.push(Message(9, b'Success moving file'))
     except Exception as e:
         task.debug(f'Error moving file: {e}')
-        _downlink(f'Error moving file: {e}', priority=9)
+        _downlink(f'Error moving file: {e}')
 
 def copy_file(task, args):
     """
@@ -120,7 +129,7 @@ def copy_file(task, args):
         tq.push(Message(9, b'Success copying file'))
     except Exception as e:
         task.debug(f'Error moving file: {e}')
-        _downlink(f'Error moving file: {e}', priority=9)
+        _downlink(f'Error moving file: {e}')
 
 def delete_file(task, file):
     """Delete file
@@ -134,7 +143,7 @@ def delete_file(task, file):
         tq.push(Message(9, b'Success deleting file'))
     except Exception as e:
         task.debug(f'Error deleting file: {e}')
-        _downlink(f'Error deleting file: {e}', priority=9)
+        _downlink(f'Error deleting file: {e}')
 
 async def reload(task):
     """Reloads the flight software
@@ -152,7 +161,25 @@ def request_beacon(task):
 
     :param task: The task that called this function
     """
-    _downlink_msg(beacon_packet(task), header=headers.BEACON, priority=10, with_ack=False)
+    _downlink_msg(beacon_packet(task), header=headers.BEACON, priority=BEACON_PRIORITY, with_ack=False)
+
+def get_rtc(task):
+    """Get the RTC time"""
+    _downlink_msg(_pack(cubesat.rtc.datetime))
+
+def get_rtc_utime(task):
+    """Get the RTC time as a unix timestamp"""
+    _downlink_msg(_pack(time.mktime(cubesat.rtc.datetime)))
+
+def set_rtc_utime(task, args):
+    """Set the RTC to the passed time
+
+    :param task: The task that called this function
+    :param args: The *unix time* to set the RTC to"""
+    utime = _unpack(args)  # year, month, day, hour, minute, second
+    t = time.localtime(utime)
+    task.debug(f'Setting RTC to {t}')
+    cubesat.rtc.datetime = t
 
 
 """
@@ -163,13 +190,13 @@ def _downlink_msg(data, priority=1, header=0x00, with_ack=True):
     assert (len(data) <= radio_utils.MAX_PACKET_LEN)
     tq.push(Message(priority, data, header=header, with_ack=with_ack))
 
-def _downlink(data, priority=1):
+def _downlink(data):
     """Write data to a file, and then create a new DiskBufferedMessage to downlink it"""
     if not (cubesat.sdcard and cubesat.vfs):
         if len(data) < 1024:  # 1kb limit for downlink
-            tq.push(MemoryBufferedMessage(priority, data))
+            tq.push(MemoryBufferedMessage(data))
         else:
-            tq.push(Message(priority, b'Downlink too large (sd missing)'))
+            tq.push(Message(COMMAND_ERROR_PRIORITY, b'Downlink too large (sd missing)'))
         return
     fname = f'/sd/downlink/{time.monotonic_ns()}.txt'
     if not file_exists('/sd/downlink'):
@@ -177,7 +204,7 @@ def _downlink(data, priority=1):
     f = open(fname, 'w')
     f.write(data)
     f.close()
-    tq.push(DiskBufferedMessage(priority, fname))
+    tq.push(DiskBufferedMessage(fname))
 
 def _cp(source, dest, buffer_size=1024):
     """
@@ -198,6 +225,16 @@ def file_exists(path):
     except Exception:
         return False
 
+def _pack(data):
+    b = BytesIO()
+    msgpack.pack(data, b)
+    b.seek(0)
+    return b.read()
+
+def _unpack(data):
+    b = BytesIO(data)
+    return msgpack.unpack(b)
+
 
 commands = {
     NO_OP: {"function": noop, "name":  "NO_OP", "will_respond": False, "has_args": False},
@@ -212,6 +249,9 @@ commands = {
     DELETE_FILE: {"function": delete_file, "name": "DELETE_FILE", "will_respond": True, "has_args": True},
     RELOAD: {"function": reload, "name": "RELOAD", "will_respond": True, "has_args": False},
     REQUEST_BEACON: {"function": request_beacon, "name": "REQUEST_BEACON", "will_respond": True, "has_args": False},
+    GET_RTC: {"function": get_rtc, "name": "GET_RTC", "will_respond": True, "has_args": False},
+    SET_RTC_UTIME: {"function": set_rtc_utime, "name": "SET_RTC_UTIME", "will_respond": True, "has_args": True},
+    GET_RTC_UTIME: {"function": get_rtc_utime, "name": "GET_RTC_UTIME", "will_respond": True, "has_args": False},
 }
 
 super_secret_code = b'p\xba\xb8C'
