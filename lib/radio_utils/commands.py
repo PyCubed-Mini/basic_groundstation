@@ -161,7 +161,7 @@ def request_beacon(task):
 
     :param task: The task that called this function
     """
-    _downlink_msg(beacon_packet(task), header=headers.BEACON, priority=BEACON_PRIORITY, with_ack=False)
+    _downlink_msg(beacon_packet(), header=headers.BEACON, priority=BEACON_PRIORITY, with_ack=False)
 
 def get_rtc(task):
     """Get the RTC time"""
