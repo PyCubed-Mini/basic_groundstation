@@ -179,19 +179,19 @@ def print_message(header, message):
     elif header == headers.MEMORY_BUFFERED_START or header == headers.DISK_BUFFERED_START:
         print(f"Buffered:\n\t{message}")
     else:
-        print(f"Unknown: {message}")
+        print(f"Header {header} unknown: {message}")
 
 
 def beacon_str(beacon):
     beacon_dict = unpack_beacon(beacon)
-    bs = "\n{bold}Beacon:{normal}"
+    bs = f"\n{bold}Beacon:{normal}"
     for bk in beacon_dict:
         bv = beacon_dict[bk]
         if isinstance(bv, float):
             bvstr = f"{bv:.4}"
         else:
             bvstr = str(bv)
-        bs += f"\t{bk:.<35}" + " " + bvstr
+        bs += f"\t{bk:.<35} {bvstr}\n"
     return bs
 
 

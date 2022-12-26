@@ -2,14 +2,14 @@
 Simple script for doing typical groundstation operations as 
 part of a day in the life test.
 """
+from gs_setup import *
+from gs_shell_tasks import *
+from shell_utils import bold, normal, red, green, yellow, blue, get_input_discrete, manually_configure_radio, print_radio_configuration
+import tasko
+import time
 import sys
 sys.path.append("lib")
-import time
-import tasko
 
-from shell_utils import bold, normal, red, green, yellow, blue, get_input_discrete, manually_configure_radio, print_radio_configuration
-from gs_shell_tasks import *
-from gs_setup import *
 
 log_filename = "./test_logs.txt"
 beacon_frequency_hz = 1.0 / 20
@@ -69,7 +69,8 @@ async def get_beacon():
     log_print(f"Requesting beacon...")
     success, bs = await request_beacon(radio, debug=debug)
     if success:
-        log_print(f"Successful beacon request" + bs, printcolor=green)
+        log_print(f"Successful beacon request", printcolor=green)
+        log_print(bs)
     else:
         log_print(f"Failed beacon request", printcolor=red)
 
