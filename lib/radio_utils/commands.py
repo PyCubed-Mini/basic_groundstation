@@ -250,7 +250,7 @@ commands = {
     RELOAD: {"function": reload, "name": "RELOAD", "will_respond": True, "has_args": False},
     REQUEST_BEACON: {"function": request_beacon, "name": "REQUEST_BEACON", "will_respond": True, "has_args": False},
     GET_RTC: {"function": get_rtc, "name": "GET_RTC", "will_respond": True, "has_args": False},
-    SET_RTC_UTIME: {"function": set_rtc_utime, "name": "SET_RTC_UTIME", "will_respond": True, "has_args": True},
+    SET_RTC_UTIME: {"function": set_rtc_utime, "name": "SET_RTC_UTIME", "will_respond": False, "has_args": True},
     GET_RTC_UTIME: {"function": get_rtc_utime, "name": "GET_RTC_UTIME", "will_respond": True, "has_args": False},
 }
 

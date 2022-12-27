@@ -10,6 +10,7 @@ green = '\033[32m'
 yellow = '\033[33m'
 blue = '\033[34m'
 
+
 def get_input_discrete(prompt_str, choice_values):
     print(prompt_str)
     choice = None
@@ -51,7 +52,7 @@ def is_number(s):
         return False
 
 
-def get_input_range(prompt_str, choice_range):
+def get_input_range(prompt_str, choice_range, allow_default=True):
     print(prompt_str)
     choice = None
 
@@ -59,7 +60,7 @@ def get_input_range(prompt_str, choice_range):
 
     while True:
         choice = input(f"{choice_range_str} ~> ").lower()
-        if choice == "":
+        if choice == "" and allow_default:
             break
 
         if not is_number(choice):
@@ -83,6 +84,7 @@ def set_param_from_input_range(param, prompt_str, choice_range, allow_default=Fa
     else:
         return float(choice)
 
+
 def manually_configure_radio(radio):
     radio.frequency_mhz = set_param_from_input_range(radio.frequency_mhz, f"Frequency (currently {radio.frequency_mhz} MHz)",
                                                      [240.0, 960.0], allow_default=True)
@@ -104,6 +106,7 @@ def manually_configure_radio(radio):
                                                 [0.0, 100.0], allow_default=True)
     radio.afc_enable = set_param_from_input_discrete(radio.afc_enable, f"Enable automatic frequency calibration (AFC) (currently {radio.afc_enable})",
                                                      ["0", "1"], allow_default=True)
+
 
 def print_radio_configuration(radio):
     print(f"{yellow}{bold}Radio Configuration:{normal}")

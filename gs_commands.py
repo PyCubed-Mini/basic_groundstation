@@ -4,8 +4,15 @@ import json
 from lib.logs import unpack_beacon
 from lib.radio_utils.disk_buffered_message import DiskBufferedMessage
 from lib.radio_utils import headers
-from lib.radio_utils.commands import super_secret_code, commands
+from lib.radio_utils.commands import super_secret_code, commands, _pack, _unpack
 from shell_utils import bold, normal, red
+import time
+try:
+    import calendar
+    HAS_CALENDAR = True
+except:
+    HAS_CALENDAR = False
+
 
 commands_by_name = {
     commands[cb]["name"]:
@@ -24,7 +31,7 @@ async def send_command(radio, command_bytes, args, will_respond, max_rx_fails=10
         if will_respond:
             if debug:
                 print('Waiting for response')
-            header, response = await wait_for_message(radio, max_rx_fails=10)
+            header, response = await wait_for_message(radio, max_rx_fails=10, debug=debug)
             if header is not None:
                 success = True
                 if debug:
@@ -107,10 +114,50 @@ async def request_beacon(radio, debug=False):
         return False, None
 
 
-async def receive(rfm9x, with_ack=True):
+async def set_time(radio, unix_time=None, debug=False):
+    """ Update the real time clock on the satellite using either a given value or the system time"""
+    if unix_time is None:
+        if HAS_CALENDAR:
+            unix_time = calendar.timegm(time.gmtime())
+        else:
+            print(f"GMT unavailable - using local time")
+            unix_time = time.mktime(time.localtime())
+
+    if debug:
+        print(f"Updating time to {unix_time}")
+
+    args = _pack(unix_time)
+
+    success, _, _ = await send_command(
+        radio,
+        commands_by_name["SET_RTC_UTIME"]["bytes"],
+        args,
+        commands_by_name["SET_RTC_UTIME"]["will_respond"],
+        debug=debug
+    )
+
+    return success
+
+
+async def get_time(radio, debug=False):
+    success, header, response = await send_command(
+        radio,
+        commands_by_name["GET_RTC_UTIME"]["bytes"],
+        "",
+        commands_by_name["GET_RTC_UTIME"]["will_respond"],
+        debug=debug)
+
+    if success and header == headers.DEFAULT:
+        sat_time = _unpack(response)
+        return True, sat_time
+    else:
+        return False, None
+
+
+async def receive(rfm9x, with_ack=True, debug=False):
     """Recieve a packet.  Returns None if no packet was received.
     Otherwise returns (header, payload)"""
-    packet = await rfm9x.receive(with_ack=with_ack, with_header=True, debug=True)
+    packet = await rfm9x.receive(with_ack=with_ack, with_header=True, debug=debug)
     if packet is None:
         return None
     return packet[0:6], packet[6:]
@@ -150,12 +197,12 @@ class _data:
         self.cmsg_last = bytes([])
 
 
-async def wait_for_message(radio, max_rx_fails=10):
+async def wait_for_message(radio, max_rx_fails=10, debug=False):
     data = _data()
 
     rx_fails = 0
     while True:
-        res = await receive(radio)
+        res = await receive(radio, debug=debug)
 
         if res is None:
             rx_fails += 1

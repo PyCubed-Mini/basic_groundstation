@@ -1,16 +1,16 @@
 """
 Provides a basic shell-like interface to send and receive data from the satellite
 """
+import tasko
+from gs_setup import *
+from gs_shell_tasks import *
+from shell_utils import *
 import sys
 sys.path.append("lib")
-from shell_utils import bold, normal, red, green, yellow, blue, get_input_discrete, manually_configure_radio, print_radio_configuration
-from gs_shell_tasks import *
-from gs_setup import *
 try:
     import supervisor
 except ImportError:
     supervisor = None
-import tasko
 
 
 # prevent board from reloading in the middle of the test
@@ -18,12 +18,16 @@ if supervisor is not None:
     supervisor.disable_autoreload()
 
 prompt_options = {"Receive loop": ("r", "receive"),
+                  "Beacon request loop": ("b", "beacon"),
                   "Upload file": ("u", "upload"),
                   "Send command": ("c", "command"),
+                  "Set time": ("st", "settime"),
+                  "Get time": ("gt", "gettime"),
                   "Help": ("h", "print_help"),
                   "Toggle verbose debug prints": ("v", "verbose"),
                   "Quit": ("q", "quit")}
 flattend_prompt_options = [v for pov in prompt_options.values() for v in pov]
+
 
 def print_help():
     print(f"\n{yellow}Groundstation shell help:{normal}")
@@ -67,12 +71,21 @@ def gs_shell_main_loop():
     verbose = True
     while True:
         try:
-            choice = get_input_discrete("\nChoose an action", flattend_prompt_options)
+            choice = get_input_discrete(f"\n{blue}Choose an action{normal}", flattend_prompt_options)
             if choice in prompt_options["Receive loop"]:
                 print("Entering receive loop. CTRL-C to exit")
                 while True:
                     tasko.add_task(read_loop(radio), 1)
                     tasko.run()
+
+            elif choice in prompt_options["Beacon request loop"]:
+                beacon_period = get_input_range("Request period (seconds)", (10, 100), allow_default=False)
+                beacon_frequency_hz = 1.0 / float(beacon_period)
+                logname = input("log file name (empty to not log) = ")
+                def get_beacon_noargs(): return get_beacon(radio, debug=verbose, logname=logname)
+                tasko.schedule(beacon_frequency_hz, get_beacon_noargs, 10)
+                tasko.run()
+
             elif choice in prompt_options["Upload file"]:
                 source = input('source path = ')
                 dest = input('destination path = ')
@@ -87,6 +100,28 @@ def gs_shell_main_loop():
                 args = input('arguments = ')
 
                 tasko.add_task(send_command_task(radio, command_bytes, args, will_respond, debug=verbose), 1)
+                tasko.run()
+                tasko.reset()
+
+            elif choice in prompt_options["Set time"]:
+                while True:
+                    t = input("seconds since epoch (empty for system time) = ")
+                    if t == "":
+                        t = None
+                        break
+                    else:
+                        try:
+                            t = int(t)
+                            break
+                        except ValueError:
+                            print("Invalid time - must be empty or an integer")
+
+                tasko.add_task(set_time(radio, t, debug=verbose), 1)
+                tasko.run()
+                tasko.reset()
+
+            elif choice in prompt_options["Get time"]:
+                tasko.add_task(get_time_task(radio, debug=verbose), 1)
                 tasko.run()
                 tasko.reset()
 
