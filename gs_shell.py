@@ -1,12 +1,14 @@
 """
 Provides a basic shell-like interface to send and receive data from the satellite
 """
-import tasko
-from gs_setup import *
-from gs_shell_tasks import *
+import sys  # noqa
+sys.path.append("lib")  # noqa
+
 from shell_utils import *
-import sys
-sys.path.append("lib")
+from gs_shell_tasks import *
+from gs_setup import *
+import tasko
+
 try:
     import supervisor
 except ImportError:
