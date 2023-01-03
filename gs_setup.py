@@ -9,12 +9,11 @@ from lib import pycubed_rfm9x_fsk
 from lib.configuration import radio_configuration as rf_config
 from shell_utils import bold, normal
 
-def initialize_radio(cs, reset):
+
+def initialize_radio(spi, cs, reset):
     """
     Initialize the radio - uses lib/configuration/radio_configuration to configure with defaults
     """
-
-    spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
 
     radio = pycubed_rfm9x_fsk.RFM9x(
         spi,
@@ -36,8 +35,11 @@ def initialize_radio(cs, reset):
 
     return radio
 
-def satellite_cs_reset():
+
+def satellite_spi_config():
     # pocketqube
+    spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
+
     cs = digitalio.DigitalInOut(board.RF_CS)
     reset = digitalio.DigitalInOut(board.RF_RST)
     cs.switch_to_output(value=True)
@@ -48,19 +50,43 @@ def satellite_cs_reset():
     radio_DIO1 = digitalio.DigitalInOut(board.RF_IO1)
     radio_DIO1.switch_to_input()
 
-    return cs, reset
+    return spi, cs, reset
 
-def feather_cs_reset():
+
+def feather_spi_config():
     # feather
+    spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
+
     cs = digitalio.DigitalInOut(board.D5)
     reset = digitalio.DigitalInOut(board.D6)
     cs.switch_to_output(value=True)
     reset.switch_to_output(value=True)
 
-    return cs, reset
+    return spi, cs, reset
 
-def pi_cs_reset():
-    cs = digitalio.DigitalInOut(board.CE1)
-    reset = digitalio.DigitalInOut(board.D25)
 
-    return cs, reset
+def pi_spi_config():
+    spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
+
+    cs = digitalio.digitalinout(board.ce1)
+    reset = digitalio.digitalinout(board.d25)
+
+    return spi, cs, reset
+
+
+def rpigs_tx_spi_config():
+    spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
+
+    cs = digitalio.digitalinout(board.ce1)
+    reset = digitalio.digitalinout(board.d25)
+
+    return spi, cs, reset
+
+
+def rpigs_rx_spi_config():
+    spi = busio.SPI(board.SCK_1, MOSI=board.MOSI_1, MISO=board.MISO_1)
+
+    cs = digitalio.digitalinout(board.ce1)
+    reset = digitalio.digitalinout(board.d25)
+
+    return spi, cs, reset

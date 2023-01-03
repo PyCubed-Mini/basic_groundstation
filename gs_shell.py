@@ -40,21 +40,36 @@ def print_help():
 print(f"\n{bold}{yellow}PyCubed-Mini Groundstation Shell{normal}\n")
 
 board_str = get_input_discrete(
-    f"Select the board {bold}(s){normal}atellite, {bold}(f){normal}eather, {bold}(r){normal}aspberry pi",
-    ["s", "f", "r"]
+    f"""Select the board/radio:
+        {bold}(s){normal} satellite,
+        {bold}(f){normal} feather,
+        {bold}(p){normal} raspberry pi,
+        {bold}(t){normal} RPiGS TX,
+        {bold}(r){normal} RPiGS RX,
+        """,
+    ["s", "f", "p", "t", "r"]
 )
 
 if board_str == "s":
-    cs, reset = satellite_cs_reset()
+    spi, cs, reset = satellite_spi_config()
     print(f"{bold}{green}Satellite{normal} selected")
 elif board_str == "f":
-    cs, reset = feather_cs_reset()
+    spi, cs, reset = feather_spi_config()
     print(f"{bold}{green}Feather{normal} selected")
-else:  # board_str == "r"
-    cs, reset = pi_cs_reset()
+elif board_str == "p":
+    spi, cs, reset = pi_spi_config()
     print(f"{bold}{green}Raspberry Pi{normal} selected")
+elif board_str == "t":
+    spi, cs, reset = rpigs_tx_spi_config()
+    print(f"{bold}{green}Raspberry Pi{normal} selected")
+elif board_str == "r":
+    spi, cs, reset = rpigs_rx_spi_config()
+    print(f"{bold}{green}Raspberry Pi{normal} selected")
+else:
+    raise ValueError(f"Board string {board_str} invalid")
 
-radio = initialize_radio(cs, reset)
+
+radio = initialize_radio(spi, cs, reset)
 
 print_radio_configuration(radio)
 
