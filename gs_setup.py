@@ -68,8 +68,8 @@ def feather_spi_config():
 def pi_spi_config():
     spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
 
-    cs = digitalio.digitalinout(board.ce1)
-    reset = digitalio.digitalinout(board.d25)
+    cs = digitalio.DigitalInOut(board.ce1)
+    reset = digitalio.DigitalInOut(board.d25)
 
     return spi, cs, reset
 
@@ -77,8 +77,8 @@ def pi_spi_config():
 def rpigs_tx_spi_config():
     spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
 
-    cs = digitalio.digitalinout(board.ce1)
-    reset = digitalio.digitalinout(board.d25)
+    cs = digitalio.DigitalInOut(board.D8)
+    reset = digitalio.DigitalInOut(board.D25)
 
     return spi, cs, reset
 
@@ -86,7 +86,7 @@ def rpigs_tx_spi_config():
 def rpigs_rx_spi_config():
     spi = busio.SPI(board.SCK_1, MOSI=board.MOSI_1, MISO=board.MISO_1)
 
-    cs = digitalio.digitalinout(board.ce1)
-    reset = digitalio.digitalinout(board.d25)
+    cs = digitalio.DigitalInOut(board.D16)
+    reset = digitalio.DigitalInOut(board.D24)
 
     return spi, cs, reset
