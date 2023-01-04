@@ -17,6 +17,7 @@ import supervisor
 from logs import beacon_packet
 import msgpack
 from io import BytesIO
+import struct
 
 NO_OP = b'\x00\x00'
 HARD_RESET = b'\x00\x01'
@@ -24,7 +25,7 @@ QUERY = b'\x00\x03'
 EXEC_PY = b'\x00\x04'
 REQUEST_FILE = b'\x00\x05'
 LIST_DIR = b'\x00\x06'
-TQ_LEN = b'\x00\x07'
+TQ_SIZE = b'\x00\x07'
 MOVE_FILE = b'\x00\x08'
 COPY_FILE = b'\x00\x09'
 DELETE_FILE = b'\x00\x10'
@@ -33,7 +34,8 @@ REQUEST_BEACON = b'\x00\x12'
 GET_RTC = b'\x00\x13'
 SET_RTC_UTIME = b'\x00\x14'
 GET_RTC_UTIME = b'\x00\x15'
-
+SET_RTC = b'\x00\x16'
+CLEAR_TX_QUEUE = b'\x00\x17'
 
 COMMAND_ERROR_PRIORITY = 9
 BEACON_PRIORITY = 10
@@ -90,10 +92,10 @@ def list_dir(task, path):
     res = json.dumps(res)
     _downlink(res)
 
-def tq_len(task):
+def tq_size(task):
     """Return the length of the transmission queue"""
-    len = str(tq.len())
-    tq.push(Message(1, len))
+    len = str(tq.size())
+    _downlink(f"{len}")
 
 def move_file(task, args):
     """
@@ -165,21 +167,33 @@ def request_beacon(task):
 
 def get_rtc(task):
     """Get the RTC time"""
-    _downlink_msg(_pack(cubesat.rtc.datetime))
+    _downlink_msg(_pack(tuple(cubesat.rtc.datetime)))
 
 def get_rtc_utime(task):
     """Get the RTC time as a unix timestamp"""
-    _downlink_msg(_pack(time.mktime(cubesat.rtc.datetime)))
+    _downlink_msg(struct.pack('i', time.mktime(cubesat.rtc.datetime)))
+
+def set_rtc(task, args):
+    """Set the RTC to the passed time"""
+    ymdhms = _unpack(args)  # year, month, day, hour, minute, second
+    cubesat.rtc.datetime = time.struct_time(ymdhms + [0, -1, -1])
+    cubesat.f_datetime_valid = True
 
 def set_rtc_utime(task, args):
     """Set the RTC to the passed time
 
     :param task: The task that called this function
     :param args: The *unix time* to set the RTC to"""
-    utime = _unpack(args)
+    utime = struct.unpack(args)
+    utime = utime[0]  # unpack returns a "tuple" with one element
     t = time.localtime(utime)
-    task.debug(f'Setting RTC to {t}')
     cubesat.rtc.datetime = t
+    cubesat.f_datetime_valid = True
+
+def clear_tx_queue(task):
+    """Clear the transmission queue"""
+    tq.clear()
+    task.debug('Cleared transmission queue')
 
 
 """
@@ -243,15 +257,17 @@ commands = {
     EXEC_PY: {"function": exec_py, "name": "EXEC_PY", "will_respond": False, "has_args": True},
     REQUEST_FILE: {"function": request_file, "name": "REQUEST_FILE", "will_respond": True, "has_args": True},
     LIST_DIR: {"function": list_dir, "name": "LIST_DIR", "will_respond": True, "has_args": True},
-    TQ_LEN: {"function": tq_len, "name": "TQ_LEN", "will_respond": True, "has_args": False},
+    TQ_SIZE: {"function": tq_size, "name": "TQ_SIZE", "will_respond": True, "has_args": False},
     MOVE_FILE: {"function": move_file, "name": "MOVE_FILE", "will_respond": True, "has_args": True},
     COPY_FILE: {"function": copy_file, "name": "COPY_FILE", "will_respond": True, "has_args": True},
     DELETE_FILE: {"function": delete_file, "name": "DELETE_FILE", "will_respond": True, "has_args": True},
     RELOAD: {"function": reload, "name": "RELOAD", "will_respond": True, "has_args": False},
     REQUEST_BEACON: {"function": request_beacon, "name": "REQUEST_BEACON", "will_respond": True, "has_args": False},
     GET_RTC: {"function": get_rtc, "name": "GET_RTC", "will_respond": True, "has_args": False},
-    SET_RTC_UTIME: {"function": set_rtc_utime, "name": "SET_RTC_UTIME", "will_respond": False, "has_args": True},
     GET_RTC_UTIME: {"function": get_rtc_utime, "name": "GET_RTC_UTIME", "will_respond": True, "has_args": False},
+    SET_RTC: {"function": set_rtc, "name": "SET_RTC", "will_respond": False, "has_args": True},
+    SET_RTC_UTIME: {"function": set_rtc_utime, "name": "SET_RTC_UTIME", "will_respond": False, "has_args": True},
+    CLEAR_TX_QUEUE: {"function": clear_tx_queue, "name": "CLEAR_TX_QUEUE", "will_respond": False, "has_args": False},
 }
 
 super_secret_code = b'p\xba\xb8C'

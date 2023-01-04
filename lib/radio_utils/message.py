@@ -52,4 +52,4 @@ class Message:
         return self.priority > other.priority
 
     def __repr__(self) -> str:
-        return str(self.str[:20] + "..." if len(self.str) > 23 else self.str)
+        return str(self.str[:20] + b"..." if len(self.str) > 23 else self.str)

@@ -43,3 +43,8 @@ def clear():
     """Clears the transmission queue"""
     global queue
     queue = []
+
+def size():
+    """Returns the number of messages in the transmission queue"""
+    global queue
+    return len(queue)
