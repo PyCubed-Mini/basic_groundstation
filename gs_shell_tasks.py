@@ -20,10 +20,10 @@ def get_time_task(radio, debug=False):
         print("Command failed")
 
 
-def read_loop(radio):
+def read_loop(radio, debug=False):
 
     while True:
-        header, message = wait_for_message(radio)
+        header, message = wait_for_message(radio, debug=debug)
         print_message(header, message)
 
 

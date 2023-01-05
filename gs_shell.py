@@ -91,7 +91,7 @@ def gs_shell_main_loop():
             if choice in prompt_options["Receive loop"]:
                 print("Entering receive loop. CTRL-C to exit")
                 while True:
-                    read_loop(radio)
+                    read_loop(radio, debug=verbose)
 
             elif choice in prompt_options["Beacon request loop"]:
                 beacon_period = get_input_range("Request period (seconds)", (10, 100), allow_default=False)
