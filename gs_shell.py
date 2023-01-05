@@ -7,7 +7,6 @@ sys.path.append("lib")  # noqa
 from shell_utils import *
 from gs_shell_tasks import *
 from gs_setup import *
-import tasko
 
 try:
     import supervisor
@@ -92,23 +91,19 @@ def gs_shell_main_loop():
             if choice in prompt_options["Receive loop"]:
                 print("Entering receive loop. CTRL-C to exit")
                 while True:
-                    tasko.add_task(read_loop(radio), 1)
-                    tasko.run()
+                    read_loop(radio)
 
             elif choice in prompt_options["Beacon request loop"]:
                 beacon_period = get_input_range("Request period (seconds)", (10, 100), allow_default=False)
                 beacon_frequency_hz = 1.0 / float(beacon_period)
                 logname = input("log file name (empty to not log) = ")
-                def get_beacon_noargs(): return get_beacon(radio, debug=verbose, logname=logname)
-                tasko.schedule(beacon_frequency_hz, get_beacon_noargs, 10)
-                tasko.run()
+                while True:
+                    get_beacon(radio, debug=verbose, logname=logname)
 
             elif choice in prompt_options["Upload file"]:
                 source = input('source path = ')
                 dest = input('destination path = ')
-                tasko.add_task(upload_file(radio, source, dest), 1)
-                tasko.run()
-                tasko.reset()
+                upload_file(radio, source, dest)
 
             elif choice in prompt_options["Send command"]:
                 command_name = get_input_discrete("Select a command", list(commands_by_name.keys())).upper()
@@ -116,9 +111,7 @@ def gs_shell_main_loop():
                 will_respond = commands_by_name[command_name]["will_respond"]
                 args = input('arguments = ')
 
-                tasko.add_task(send_command_task(radio, command_bytes, args, will_respond, debug=verbose), 1)
-                tasko.run()
-                tasko.reset()
+                send_command_task(radio, command_bytes, args, will_respond, debug=verbose)
 
             elif choice in prompt_options["Set time"]:
                 while True:
@@ -133,14 +126,10 @@ def gs_shell_main_loop():
                         except ValueError:
                             print("Invalid time - must be empty or an integer")
 
-                tasko.add_task(set_time(radio, t, debug=verbose), 1)
-                tasko.run()
-                tasko.reset()
+                set_time(radio, t, debug=verbose)
 
             elif choice in prompt_options["Get time"]:
-                tasko.add_task(get_time_task(radio, debug=verbose), 1)
-                tasko.run()
-                tasko.reset()
+                get_time_task(radio, debug=verbose)
 
             elif choice in prompt_options["Help"]:
                 print_help()
@@ -154,7 +143,6 @@ def gs_shell_main_loop():
 
         except KeyboardInterrupt:
             print(f"\n{red}Enter q to quit{normal}")
-            tasko.reset()
             pass
 
 

@@ -2,8 +2,8 @@ from gs_commands import *
 from shell_utils import *
 
 
-async def send_command_task(radio, command_bytes, args, will_respond, debug=False):
-    success, header, response = await send_command(radio, command_bytes, args, will_respond, debug=debug)
+def send_command_task(radio, command_bytes, args, will_respond, debug=False):
+    success, header, response = send_command(radio, command_bytes, args, will_respond, debug=debug)
     if success:
         print("Command successful")
         if header is not None and response is not None:
@@ -12,18 +12,18 @@ async def send_command_task(radio, command_bytes, args, will_respond, debug=Fals
         print("Command failed")
 
 
-async def get_time_task(radio, debug=False):
-    success, sat_time = await get_time(radio, debug=debug)
+def get_time_task(radio, debug=False):
+    success, sat_time = get_time(radio, debug=debug)
     if success:
         print(f"Time = {sat_time}")
     else:
         print("Command failed")
 
 
-async def read_loop(radio):
+def read_loop(radio):
 
     while True:
-        header, message = await wait_for_message(radio)
+        header, message = wait_for_message(radio)
         print_message(header, message)
 
 
@@ -52,9 +52,9 @@ def timestamped_log_print(str, printcolor=normal, logname="./test_log.txt"):
             print(e)
 
 
-async def get_beacon(radio, debug=False, logname=None):
+def get_beacon(radio, debug=False, logname=None):
     timestamped_log_print(f"Requesting beacon...")
-    success, bs = await request_beacon(radio, debug=debug)
+    success, bs = request_beacon(radio, debug=debug)
     if success:
         timestamped_log_print(f"Successful beacon request", printcolor=green, logname=logname)
         timestamped_log_print(bs, logname=logname)

@@ -19,7 +19,6 @@ import random
 import time
 import adafruit_bus_device.spi_device as spidev
 from micropython import const
-import tasko
 
 HAS_SUPERVISOR = False
 
@@ -721,7 +720,7 @@ class RFM9x:
         return (self._read_u8(_RH_RF95_REG_3F_IRQ_FLAGS_2) & (0b1 << 6)) >> 6
 
     # pylint: disable=too-many-branches
-    async def send(
+    def send(
         self,
         data,
         *,
@@ -797,14 +796,16 @@ class RFM9x:
                 if ticks_diff(supervisor.ticks_ms(), start) >= self.xmit_timeout * 1000:
                     timed_out = True
                 else:
-                    await tasko.sleep(0)
+                    # await tasko.sleep(0)
+                    continue
         else:
             start = time.monotonic()
             while not timed_out and not self.tx_done():
                 if time.monotonic() - start >= self.xmit_timeout:
                     timed_out = True
                 else:
-                    await tasko.sleep(0)
+                    # await tasko.sleep(0)
+                    continue
 
         # Done transmitting - change modes (interrupt automatically cleared on mode change)
         if keep_listening:
@@ -814,7 +815,7 @@ class RFM9x:
             self.idle()
         return not timed_out
 
-    async def send_with_ack(self, data, debug=False):
+    def send_with_ack(self, data, debug=False):
         """Reliable Datagram mode:
         Send a packet with data and wait for an ACK response.
         The packet header is automatically generated.
@@ -828,13 +829,13 @@ class RFM9x:
         self.sequence_number = (self.sequence_number + 1) & 0xFF
         while not got_ack and retries_remaining:
             self.identifier = self.sequence_number
-            await self.send(data, keep_listening=True, debug=debug)
+            self.send(data, keep_listening=True, debug=debug)
             # Don't look for ACK from Broadcast message
             if self.destination == _RH_BROADCAST_ADDRESS:
                 got_ack = True
             else:
                 # wait for a packet from our destination
-                ack_packet = await self.receive(
+                ack_packet = self.receive(
                     timeout=self.ack_wait, with_header=True, debug=debug)
                 if ack_packet is not None:
                     if ack_packet[4] & _RH_FLAGS_ACK:
@@ -847,7 +848,7 @@ class RFM9x:
             # pause before next retry -- random delay
             if not got_ack:
                 # delay by random amount before next try
-                await tasko.sleep(self.ack_wait * random.random())
+                time.sleep(self.ack_wait * random.random())
                 if debug:
                     print(f"No ACK, retrying send - retries remaining: {retries_remaining}")
             retries_remaining = retries_remaining - 1
@@ -856,7 +857,7 @@ class RFM9x:
         self.flags = 0  # clear flags
         return got_ack
 
-    async def receive(
+    def receive(
         self, *, keep_listening=True, with_header=False, with_ack=False, timeout=None, debug=False
     ):
         """Wait to receive a packet from the receiver. If a packet is found the payload bytes
@@ -894,7 +895,7 @@ class RFM9x:
                 # Enter idle mode to stop receiving other packets.
                 self.idle()
                 # read packet
-                packet = await self._process_packet(with_header=with_header, with_ack=with_ack, debug=debug)
+                packet = self._process_packet(with_header=with_header, with_ack=with_ack, debug=debug)
                 if packet is not None:
                     break  # packet valid - return it
                 # packet invalid - continue listening
@@ -908,7 +909,7 @@ class RFM9x:
                     print("RFM9X: RX timed out")
                 break
 
-            await tasko.sleep(0)
+            # await tasko.sleep(0)
 
         # Exit
         if keep_listening:
@@ -918,7 +919,7 @@ class RFM9x:
 
         return packet
 
-    async def _process_packet(self, with_header=False, with_ack=False, debug=False):
+    def _process_packet(self, with_header=False, with_ack=False, debug=False):
 
         # Read the data from the radio FIFO
         packet = bytearray(_MAX_FIFO_LENGTH)
@@ -975,9 +976,9 @@ class RFM9x:
                 (packet[1] != _RH_BROADCAST_ADDRESS)):
             # delay before sending Ack to give receiver a chance to get ready
             if self.ack_delay is not None:
-                await tasko.sleep(self.ack_delay)
+                time.sleep(self.ack_delay)
             # send ACK packet to sender (data is b'!')
-            await self.send(
+            self.send(
                 b"!",
                 destination=packet[2],
                 node=packet[1],
@@ -998,6 +999,7 @@ class RFM9x:
             packet = packet[5:]
 
         return packet
+
 
 def bsd_checksum(bytedata):
     """Very simple, not secure, but fast 2 byte checksum"""

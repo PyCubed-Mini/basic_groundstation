@@ -20,18 +20,18 @@ commands_by_name = {
     for cb in commands.keys()}
 
 
-async def send_command(radio, command_bytes, args, will_respond, max_rx_fails=10, debug=False):
+def send_command(radio, command_bytes, args, will_respond, max_rx_fails=10, debug=False):
     success = False
     response = None
     header = None
     msg = bytes([headers.COMMAND]) + super_secret_code + command_bytes + bytes(args, 'utf-8')
-    if await radio.send_with_ack(msg, debug=debug):
+    if radio.send_with_ack(msg, debug=debug):
         if debug:
             print('Successfully sent command')
         if will_respond:
             if debug:
                 print('Waiting for response')
-            header, response = await wait_for_message(radio, max_rx_fails=10, debug=debug)
+            header, response = wait_for_message(radio, max_rx_fails=10, debug=debug)
             if header is not None:
                 success = True
                 if debug:
@@ -47,9 +47,9 @@ async def send_command(radio, command_bytes, args, will_respond, max_rx_fails=10
     return success, header, response
 
 
-async def move_file(radio, source_path, destination_path, debug=False):
+def move_file(radio, source_path, destination_path, debug=False):
     arg_string = json.dumps([source_path, destination_path])
-    success, _, response = await send_command(
+    success, _, response = send_command(
         radio,
         commands_by_name["MOVE_FILE"]["bytes"],
         arg_string,
@@ -70,8 +70,8 @@ async def move_file(radio, source_path, destination_path, debug=False):
     return success
 
 
-async def request_file(radio, path, debug=False):
-    success, header, response = await send_command(
+def request_file(radio, path, debug=False):
+    success, header, response = send_command(
         radio,
         commands_by_name["REQUEST_FILE"]["bytes"],
         path,
@@ -90,18 +90,18 @@ async def request_file(radio, path, debug=False):
     return success, header, response
 
 
-async def upload_file(radio, local_path, satellite_path, debug=False):
+def upload_file(radio, local_path, satellite_path, debug=False):
     msg = DiskBufferedMessage(0, local_path)
 
-    success = await send_message(radio, msg, debug=debug)
+    success = send_message(radio, msg, debug=debug)
 
     if success:
-        success &= await move_file(radio, "/sd/disk_buffered_message", satellite_path, debug=debug)
+        success &= move_file(radio, "/sd/disk_buffered_message", satellite_path, debug=debug)
     return success
 
 
-async def request_beacon(radio, debug=False):
-    success, header, response = await send_command(
+def request_beacon(radio, debug=False):
+    success, header, response = send_command(
         radio,
         commands_by_name["REQUEST_BEACON"]["bytes"],
         "",
@@ -114,7 +114,7 @@ async def request_beacon(radio, debug=False):
         return False, None
 
 
-async def set_time(radio, unix_time=None, debug=False):
+def set_time(radio, unix_time=None, debug=False):
     """ Update the real time clock on the satellite using either a given value or the system time"""
     if unix_time is None:
         if HAS_CALENDAR:
@@ -128,7 +128,7 @@ async def set_time(radio, unix_time=None, debug=False):
 
     args = _pack(unix_time)
 
-    success, _, _ = await send_command(
+    success, _, _ = send_command(
         radio,
         commands_by_name["SET_RTC_UTIME"]["bytes"],
         args,
@@ -139,8 +139,8 @@ async def set_time(radio, unix_time=None, debug=False):
     return success
 
 
-async def get_time(radio, debug=False):
-    success, header, response = await send_command(
+def get_time(radio, debug=False):
+    success, header, response = send_command(
         radio,
         commands_by_name["GET_RTC_UTIME"]["bytes"],
         "",
@@ -154,16 +154,16 @@ async def get_time(radio, debug=False):
         return False, None
 
 
-async def receive(rfm9x, with_ack=True, debug=False):
+def receive(rfm9x, with_ack=True, debug=False):
     """Recieve a packet.  Returns None if no packet was received.
     Otherwise returns (header, payload)"""
-    packet = await rfm9x.receive(with_ack=with_ack, with_header=True, debug=debug)
+    packet = rfm9x.receive(with_ack=with_ack, with_header=True, debug=debug)
     if packet is None:
         return None
     return packet[0:6], packet[6:]
 
 
-async def send_message(radio, msg, debug=False):
+def send_message(radio, msg, debug=False):
     success = True
     while True:
         packet, with_ack = msg.packet()
@@ -173,14 +173,14 @@ async def send_message(radio, msg, debug=False):
             print(f"Sending packet: {debug_packet}, with_ack: {with_ack}")
 
         if with_ack:
-            got_ack = await radio.send_with_ack(packet, debug=True)
+            got_ack = radio.send_with_ack(packet, debug=True)
             if got_ack:
                 msg.ack()
             else:
                 success = False
                 break
         else:
-            await radio.send(packet, keep_listening=True)
+            radio.send(packet, keep_listening=True)
 
         if msg.done():
             break
@@ -197,12 +197,12 @@ class _data:
         self.cmsg_last = bytes([])
 
 
-async def wait_for_message(radio, max_rx_fails=10, debug=False):
+def wait_for_message(radio, max_rx_fails=10, debug=False):
     data = _data()
 
     rx_fails = 0
     while True:
-        res = await receive(radio, debug=debug)
+        res = receive(radio, debug=debug)
 
         if res is None:
             rx_fails += 1
