@@ -7,6 +7,7 @@ from lib.radio_utils import headers
 from lib.radio_utils.commands import super_secret_code, commands, _pack, _unpack
 from shell_utils import bold, normal, red
 import time
+import struct
 try:
     import calendar
     HAS_CALENDAR = True
@@ -148,7 +149,7 @@ async def get_time(radio, debug=False):
         debug=debug)
 
     if success and header == headers.DEFAULT:
-        sat_time = _unpack(response)
+        sat_time = struct.unpack('i', response)[0]
         return True, sat_time
     else:
         return False, None
