@@ -21,11 +21,13 @@ commands_by_name = {
     for cb in commands.keys()}
 
 
-async def send_command(radio, command_bytes, args, will_respond, max_rx_fails=10, debug=False):
+async def send_command(radio, command_bytes, args, will_respond, max_rx_fails=10, debug=False, args_are_bytes=False):
     success = False
     response = None
     header = None
-    msg = bytes([headers.COMMAND]) + super_secret_code + command_bytes + bytes(args, 'utf-8')
+    if not args_are_bytes:
+        args = bytes(args, 'utf-8')
+    msg = bytes([headers.COMMAND]) + super_secret_code + command_bytes + args
     if await radio.send_with_ack(msg, debug=debug):
         if debug:
             print('Successfully sent command')
@@ -134,7 +136,8 @@ async def set_time(radio, unix_time=None, debug=False):
         commands_by_name["SET_RTC_UTIME"]["bytes"],
         args,
         commands_by_name["SET_RTC_UTIME"]["will_respond"],
-        debug=debug
+        debug=debug,
+        args_are_bytes=True
     )
 
     return success
