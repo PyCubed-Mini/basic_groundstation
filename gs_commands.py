@@ -32,7 +32,7 @@ async def send_command(radio, command_bytes, args, will_respond, max_rx_fails=10
         if will_respond:
             if debug:
                 print('Waiting for response')
-            header, response = await wait_for_message(radio, max_rx_fails=10, debug=debug)
+            header, response = await wait_for_message(radio, max_rx_fails=20, debug=debug)
             if header is not None:
                 success = True
                 if debug:
