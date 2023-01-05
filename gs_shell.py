@@ -92,7 +92,7 @@ def gs_shell_main_loop():
             if choice in prompt_options["Receive loop"]:
                 print("Entering receive loop. CTRL-C to exit")
                 while True:
-                    tasko.add_task(read_loop(radio), 1)
+                    tasko.add_task(read_loop(radio, debug=verbose), 1)
                     tasko.run()
 
             elif choice in prompt_options["Beacon request loop"]:
