@@ -931,7 +931,7 @@ class RFM9x:
         # 4 byte RadioHead header and at least one byte of data
         if packet_length < 6:
             if debug:
-                print(f"RFM9X: Incomplete message (packet_length = {packet_length} < 6, \n\tpacket = {tohexstring(packet)})")
+                print(f"RFM9X: Incomplete message (packet_length = {packet_length} < 6")  # , \n\tpacket = {tohexstring(packet)})")
             return None
 
         # Reject if the length recorded in the packet doesn't match the amount of data we got
