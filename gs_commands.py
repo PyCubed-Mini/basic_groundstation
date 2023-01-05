@@ -129,7 +129,7 @@ async def set_time(radio, unix_time=None, debug=False):
     if debug:
         print(f"Updating time to {unix_time}")
 
-    args = _pack(unix_time)
+    args = struct.pack('i', unix_time)
 
     success, _, _ = await send_command(
         radio,
