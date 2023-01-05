@@ -104,6 +104,8 @@ def manually_configure_radio(radio):
                                                  [0.0, 10.0], allow_default=True)
     radio.ack_wait = set_param_from_input_range(radio.ack_wait, f"Acknowledge RX Timeout (currently {radio.ack_wait} s)",
                                                 [0.0, 100.0], allow_default=True)
+    radio.receive_timeout = set_param_from_input_range(radio.receive_timeout, f"Receiver timeout (currently {radio.receive_timeout} s)",
+                                                       [0.0, 100.0], allow_default=True)
     radio.afc_enable = set_param_from_input_discrete(radio.afc_enable, f"Enable automatic frequency calibration (AFC) (currently {radio.afc_enable})",
                                                      ["0", "1"], allow_default=True)
 
@@ -120,4 +122,5 @@ def print_radio_configuration(radio):
     print(f"\tPreamble Length = {radio.preamble_length}")
     print(f"\tAcknowledge delay = {radio.ack_delay} s")
     print(f"\tAcknowledge wait = {radio.ack_wait} s")
+    print(f"\tReceive timeout = {radio.receive_timeout} s")
     print(f"\tAFC enabled = {radio.afc_enable}")
