@@ -20,7 +20,7 @@ async def get_time_task(radio, debug=False):
         print("Command failed")
 
 
-async def read_loop(radio):
+async def read_loop(radio, debug=False):
 
     while True:
         header, message = await wait_for_message(radio, debug=debug)
