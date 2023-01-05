@@ -80,6 +80,8 @@ if get_input_discrete(
     print_radio_configuration(radio)
 
 
+radio.receive_timeout = 10.0
+
 print_help()
 
 
