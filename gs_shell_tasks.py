@@ -34,7 +34,7 @@ def human_time_stamp():
     return f'{t.tm_year:4}.{t.tm_mon:02}.{t.tm_mday:02}.{t.tm_hour:02}:{t.tm_min:02}:{t.tm_sec:02}'
 
 
-def timestamped_log_print(str, printcolor=normal, logname="./test_log.txt"):
+def timestamped_log_print(str, printcolor=normal, logname=""):
     """
     Timestamp, print to stdout and log str to a file
     """
@@ -52,8 +52,8 @@ def timestamped_log_print(str, printcolor=normal, logname="./test_log.txt"):
             print(e)
 
 
-async def get_beacon(radio, debug=False, logname=None):
-    timestamped_log_print(f"Requesting beacon...")
+async def get_beacon(radio, debug=False, logname=""):
+    timestamped_log_print(f"Requesting beacon...", logname=logname)
     success, bs = await request_beacon(radio, debug=debug)
     if success:
         timestamped_log_print(f"Successful beacon request", printcolor=green, logname=logname)
