@@ -94,7 +94,7 @@ async def request_file(radio, path, debug=False):
 
 
 async def upload_file(radio, local_path, satellite_path, debug=False):
-    msg = DiskBufferedMessage(0, local_path)
+    msg = DiskBufferedMessage(local_path)
 
     success = await send_message(radio, msg, debug=debug)
 
