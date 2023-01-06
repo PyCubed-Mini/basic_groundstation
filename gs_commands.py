@@ -21,7 +21,7 @@ commands_by_name = {
     for cb in commands.keys()}
 
 
-async def send_command(radio, command_bytes, args, will_respond, max_rx_fails=20, debug=False, args_are_bytes=False):
+async def send_command(radio, command_bytes, args, will_respond, max_rx_fails=30, debug=False, args_are_bytes=False):
     success = False
     response = None
     header = None
