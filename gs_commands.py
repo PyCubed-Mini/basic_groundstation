@@ -244,7 +244,12 @@ def print_message(header, message):
     elif header == headers.BEACON:
         print(beacon_str(message))
     elif header == headers.MEMORY_BUFFERED_START or header == headers.DISK_BUFFERED_START:
-        print(f"Buffered:\n\t{message}")
+        print(f"Buffered:\n")
+        try:
+            print(message.decode(encoding="utf-8", errors="strict"))
+        except UnicodeDecodeError:
+            print(message.hex(" "))
+
     else:
         print(f"Header {header} unknown: {message}")
 
@@ -274,8 +279,6 @@ def handle_memory_buffered(header, data, payload):
 
     if header == headers.MEMORY_BUFFERED_END:
         data.msg_last = bytes([])
-        data.msg = str(data.msg, 'utf-8')
-        print(data.msg)
 
 
 def handle_disk_buffered(header, data, response):
@@ -291,4 +294,3 @@ def handle_disk_buffered(header, data, response):
 
     if header == headers.DISK_BUFFERED_END:
         data.cmsg_last = bytes([])
-        data.cmsg = str(data.cmsg, 'utf-8')
