@@ -22,6 +22,7 @@ if supervisor is not None:
 prompt_options = {"Receive loop": ("r", "receive"),
                   "Beacon request loop": ("b", "beacon"),
                   "Upload file": ("u", "upload"),
+                  "Request file": ("rf", "request"),
                   "Send command": ("c", "command"),
                   "Set time": ("st", "settime"),
                   "Get time": ("gt", "gettime"),
@@ -106,7 +107,13 @@ def gs_shell_main_loop():
             elif choice in prompt_options["Upload file"]:
                 source = input('source path = ')
                 dest = input('destination path = ')
-                tasko.add_task(upload_file(radio, source, dest), 1)
+                tasko.add_task(upload_file(radio, source, dest, debug=verbose), 1)
+                tasko.run()
+                tasko.reset()
+
+            elif choice in prompt_options["Request file"]:
+                source = input('source path = ')
+                tasko.add_task(request_file(radio, source, debug=verbose), 1)
                 tasko.run()
                 tasko.reset()
 
