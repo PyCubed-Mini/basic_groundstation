@@ -35,10 +35,10 @@ async def send_command(radio, command_bytes, args, will_respond, max_rx_fails=30
             if debug:
                 print('Waiting for response')
             header, response = await wait_for_message(radio, max_rx_fails=max_rx_fails, debug=debug)
+            if debug:
+                print_message(header, response)
             if header is not None:
                 success = True
-                if debug:
-                    print_message(header, response)
             else:
                 success = False
         else:
@@ -213,7 +213,7 @@ async def wait_for_message(radio, max_rx_fails=10, debug=False):
             rx_fails += 1
             if rx_fails > max_rx_fails:
                 print("wait_for_message: max_rx_fails hit")
-                return None, None
+                return None, data.msg + data.cmsg
             else:
                 continue
         else:
