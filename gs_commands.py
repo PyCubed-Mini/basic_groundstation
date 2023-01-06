@@ -21,7 +21,7 @@ commands_by_name = {
     for cb in commands.keys()}
 
 
-async def send_command(radio, command_bytes, args, will_respond, max_rx_fails=10, debug=False, args_are_bytes=False):
+async def send_command(radio, command_bytes, args, will_respond, max_rx_fails=20, debug=False, args_are_bytes=False):
     success = False
     response = None
     header = None
@@ -34,7 +34,7 @@ async def send_command(radio, command_bytes, args, will_respond, max_rx_fails=10
         if will_respond:
             if debug:
                 print('Waiting for response')
-            header, response = await wait_for_message(radio, max_rx_fails=20, debug=debug)
+            header, response = await wait_for_message(radio, max_rx_fails=max_rx_fails, debug=debug)
             if header is not None:
                 success = True
                 if debug:
@@ -79,7 +79,8 @@ async def request_file(radio, path, debug=False):
         commands_by_name["REQUEST_FILE"]["bytes"],
         path,
         commands_by_name["REQUEST_FILE"]["will_respond"],
-        debug=debug)
+        debug=debug,
+        max_rx_fails=40)
 
     if header == headers.DEFAULT:
         success &= False  # this is not a DiskBufferedMessage - an error must have occurred
