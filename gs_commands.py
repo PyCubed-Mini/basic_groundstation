@@ -292,5 +292,3 @@ def handle_disk_buffered(header, data, response):
     if header == headers.DISK_BUFFERED_END:
         data.cmsg_last = bytes([])
         data.cmsg = str(data.cmsg, 'utf-8')
-        print('Recieved disk buffered message')
-        print(data.cmsg)
