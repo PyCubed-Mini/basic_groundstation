@@ -97,7 +97,7 @@ def gs_shell_main_loop():
                     tasko.run()
 
             elif choice in prompt_options["Beacon request loop"]:
-                beacon_period = get_input_range("Request period (seconds)", (10, 100), allow_default=False)
+                beacon_period = get_input_range("Request period (seconds)", (10, 1000), allow_default=False)
                 beacon_frequency_hz = 1.0 / float(beacon_period)
                 logname = input("log file name (empty to not log) = ")
                 def get_beacon_noargs(): return get_beacon(radio, debug=verbose, logname=logname)
