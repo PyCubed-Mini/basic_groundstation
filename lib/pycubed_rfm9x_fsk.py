@@ -375,12 +375,6 @@ class RFM9x:
 
         self.tx_power = 13  # 13 dBm is a safe value any module support
 
-        self.last_rssi = 0.0
-        """The RSSI of the last received packet. Stored when the packet was received.
-           The instantaneous RSSI value may not be accurate once the
-           operating mode has been changed.
-        """
-
     # pylint: disable=no-member
     # Reconsider pylint: disable when this can be tested
     def _read_into(self, address, buf, length=None):
@@ -750,6 +744,12 @@ class Radiohead:
         self.checksum = checksum
         self.checksum_error_count = 0
 
+        self.last_rssi = 0.0
+        """The RSSI of the last received packet. Stored when the packet was received.
+           The instantaneous RSSI value may not be accurate once the
+           operating mode has been changed.
+        """
+
     def listen(self):
         self.tx_device.listen()
         self.rx_device.listen()
@@ -937,7 +937,7 @@ class Radiohead:
             # check for valid packets
             if self.rx_device.rx_done():
                 # save last RSSI reading
-                self.last_rssi = self.rssi
+                self.last_rssi = self.rx_device.rssi
                 # Enter idle mode to stop receiving other packets.
                 self.idle()
                 # read packet
