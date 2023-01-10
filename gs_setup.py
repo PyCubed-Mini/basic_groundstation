@@ -15,7 +15,7 @@ def initialize_rfm9x(spi, cs, reset):
     Initialize the radio - uses lib/configuration/radio_configuration to configure with defaults
     """
 
-    radio = pycubed_rfm9x_fsk.RFM9x(
+    rfm_device = pycubed_rfm9x_fsk.RFM9x(
         spi,
         cs,
         reset,
@@ -23,11 +23,13 @@ def initialize_rfm9x(spi, cs, reset):
     )
 
     # configure to match satellite
-    radio.tx_power = rf_config.TX_POWER
-    radio.bitrate = rf_config.BITRATE
-    radio.frequency_deviation = rf_config.FREQUENCY_DEVIATION
-    radio.rx_bandwidth = rf_config.RX_BANDWIDTH
-    radio.preamble_length = rf_config.PREAMBLE_LENGTH
+    rfm_device.tx_power = rf_config.TX_POWER
+    rfm_device.bitrate = rf_config.BITRATE
+    rfm_device.frequency_deviation = rf_config.FREQUENCY_DEVIATION
+    rfm_device.rx_bandwidth = rf_config.RX_BANDWIDTH
+    rfm_device.preamble_length = rf_config.PREAMBLE_LENGTH
+
+    return rfm_device
 
 
 def initialize_radiohead(tx_device, rx_device=None, rxtx_switch=None):
