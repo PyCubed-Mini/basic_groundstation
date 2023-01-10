@@ -52,7 +52,7 @@ board_str = get_input_discrete(
         {bold}(r){normal} RPiGS RX,
         {bold}(c){normal} RPiGS TX and RX,
         """,
-    ["s", "f", "p", "t", "r"]
+    ["s", "f", "p", "t", "r", "c"]
 )
 
 if board_str == "s":
