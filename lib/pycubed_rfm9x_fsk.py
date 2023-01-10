@@ -318,7 +318,6 @@ class RFM9x:
         bitrate=1200,
         frequency_deviation=5000,
         spi_baudrate=5000000,
-        checksum=True
     ):
         self.high_power = high_power
         # Device support SPI mode 0 (polarity & phase = 0) up to a max of 10mhz.
@@ -381,55 +380,6 @@ class RFM9x:
            The instantaneous RSSI value may not be accurate once the
            operating mode has been changed.
         """
-
-        # initialize timeouts and delays
-        self.ack_wait = 0.5
-        """The delay time before attempting a retry after not receiving an ACK"""
-        self.receive_timeout = 0.5
-        """The amount of time to poll for a received packet.
-           If no packet is received, the returned packet will be None
-        """
-        self.xmit_timeout = 2.0
-        """The amount of time to wait for the HW to transmit the packet.
-           This is mainly used to prevent a hang due to a HW issue
-        """
-        self.ack_retries = 5
-        """The number of ACK retries before reporting a failure."""
-        self.ack_delay = None
-        """The delay time before attemting to send an ACK.
-           If ACKs are being missed try setting this to .1 or .2.
-        """
-        # initialize sequence number counter for reliabe datagram mode
-        self.sequence_number = 0
-        # create seen Ids list
-        self.seen_ids = bytearray(256)
-        # initialize packet header
-        # node address - default is broadcast
-        self.node = _RH_BROADCAST_ADDRESS
-        """The default address of this Node. (0-255).
-           If not 255 (0xff) then only packets address to this node will be accepted.
-           First byte of the RadioHead header.
-        """
-        # destination address - default is broadcast
-        self.destination = _RH_BROADCAST_ADDRESS
-        """The default destination address for packet transmissions. (0-255).
-           If 255 (0xff) then any receiving node should accept the packet.
-           Second byte of the RadioHead header.
-        """
-        # ID - contains seq count for reliable datagram mode
-        self.identifier = 0
-        """Automatically set to the sequence number when send_with_ack() used.
-           Third byte of the RadioHead header.
-        """
-        # flags - identifies ack/reetry packet for reliable datagram mode
-        self.flags = 0
-        """Upper 4 bits reserved for use by Reliable Datagram Mode.
-           Lower 4 bits may be used to pass information.
-           Fourth byte of the RadioHead header.
-        """
-
-        self.checksum = checksum
-        self.checksum_error_count = 0
 
     # pylint: disable=no-member
     # Reconsider pylint: disable when this can be tested
@@ -668,7 +618,6 @@ class RFM9x:
     def rssi(self):
         """The received strength indicator (in dBm) of the last received message."""
         # Read RSSI register and convert to value using formula in datasheet.
-        # Remember in LoRa mode the payload register changes function to RSSI!
         raw_rssi = self._read_u8(_RH_RF95_REG_11_RSSI_VALUE)
         return -raw_rssi / 2
 
@@ -720,7 +669,104 @@ class RFM9x:
         """True when FIFO is empty"""
         return (self._read_u8(_RH_RF95_REG_3F_IRQ_FLAGS_2) & (0b1 << 6)) >> 6
 
-    # pylint: disable=too-many-branches
+
+class Radiohead:
+
+    def __init__(self,
+                 tx_device,
+                 rx_device=None,
+                 rxtx_switch=None,
+                 checksum=True
+                 ):
+        """
+        """
+
+        self.tx_device = tx_device
+
+        if rx_device is not None:
+            self.rx_device = rx_device
+        else:
+            self.rx_device = tx_device
+
+        self.rxtx_switch = rxtx_switch
+
+        self.ack_wait = 0.5
+        """The delay time before attempting a retry after not receiving an ACK"""
+
+        self.receive_timeout = 0.5
+        """The amount of time to poll for a received packet.
+           If no packet is received, the returned packet will be None
+        """
+
+        self.xmit_timeout = 2.0
+        """The amount of time to wait for the HW to transmit the packet.
+           This is mainly used to prevent a hang due to a HW issue
+        """
+
+        self.ack_retries = 5
+        """The number of ACK retries before reporting a failure."""
+
+        self.ack_delay = None
+        """The delay time before attemting to send an ACK.
+           If ACKs are being missed try setting this to .1 or .2.
+        """
+
+        # initialize sequence number counter for reliabe datagram mode
+        self.sequence_number = 0
+
+        # create seen Ids list
+        self.seen_ids = bytearray(256)
+
+        # initialize packet header
+        # node address - default is broadcast
+        self.node = _RH_BROADCAST_ADDRESS
+        """The default address of this Node. (0-255).
+           If not 255 (0xff) then only packets address to this node will be accepted.
+           First byte of the RadioHead header.
+        """
+
+        # destination address - default is broadcast
+        self.destination = _RH_BROADCAST_ADDRESS
+        """The default destination address for packet transmissions. (0-255).
+           If 255 (0xff) then any receiving node should accept the packet.
+           Second byte of the RadioHead header.
+        """
+
+        # ID - contains seq count for reliable datagram mode
+        self.identifier = 0
+        """Automatically set to the sequence number when send_with_ack() used.
+           Third byte of the RadioHead header.
+        """
+
+        # flags - identifies ack/reetry packet for reliable datagram mode
+        self.flags = 0
+        """Upper 4 bits reserved for use by Reliable Datagram Mode.
+           Lower 4 bits may be used to pass information.
+           Fourth byte of the RadioHead header.
+        """
+
+        self.checksum = checksum
+        self.checksum_error_count = 0
+
+    def listen(self):
+        self.tx_device.listen()
+        self.rx_device.listen()
+        if self.rxtx_switch:
+            self.rxtx_switch.receive()
+
+    def idle(self):
+        self.tx_device.idle()
+        self.rx_device.idle()
+        if self.rxtx_switch:
+            self.rxtx_switch.idle()
+
+    def transmit(self):
+        self.tx_device.transmit()
+        self.rx_device.idle()
+        if self.rxtx_switch:
+            self.rxtx_switch.transmit()
+
+        # pylint: disable=too-many-branches
     async def send(
         self,
         data,
@@ -734,7 +780,8 @@ class RFM9x:
         """Send a string of data using the transmitter.
         You can only send 57 bytes at a time
         (limited by chip's FIFO size and appended headers).
-        This appends a 4 byte header to be compatible with the RadioHead library.
+        This prepends a 1 byte length to be compatible with the RFM9X fsk packet handler,
+        and 4 byte header to be compatible with the RadioHead library.
         The header defaults to using the initialized attributes:
         (destination, node, identifier, flags)
         It may be temporarily overidden via the kwargs - destination, node, identifier, flags.
@@ -781,7 +828,7 @@ class RFM9x:
             payload = payload + checksum
 
         # Write payload.
-        self._write_from(_RH_RF95_REG_00_FIFO, payload)
+        self.tx_device._write_from(_RH_RF95_REG_00_FIFO, payload)
 
         # Turn on transmit mode to send out the packet.
         self.transmit()
@@ -790,7 +837,7 @@ class RFM9x:
         timed_out = False
         if HAS_SUPERVISOR:
             start = supervisor.ticks_ms()
-            while not timed_out and not self.tx_done():
+            while not timed_out and not self.tx_device.tx_done():
                 if ticks_diff(supervisor.ticks_ms(), start) >= self.xmit_timeout * 1000:
                     timed_out = True
                 else:
@@ -881,11 +928,12 @@ class RFM9x:
             start = time.monotonic()
 
         packet = None
-        # Make sure we are listening for packets.
+        # Make sure we are listening for packets (and not transmitting).
         self.listen()
+
         while True:
             # check for valid packets
-            if self.rx_done():
+            if self.rx_device.rx_done():
                 # save last RSSI reading
                 self.last_rssi = self.rssi
                 # Enter idle mode to stop receiving other packets.
@@ -919,7 +967,7 @@ class RFM9x:
 
         # Read the data from the radio FIFO
         packet = bytearray(_MAX_FIFO_LENGTH)
-        packet_length = self._read_until_flag(_RH_RF95_REG_00_FIFO, packet, self.fifo_empty)
+        packet_length = self.rx_device._read_until_flag(_RH_RF95_REG_00_FIFO, packet, self.rx_device.fifo_empty)
 
         # Reject if the received packet is too small to include the 1 byte length, the
         # 4 byte RadioHead header and at least one byte of data
@@ -992,6 +1040,7 @@ class RFM9x:
             packet = packet[5:]
 
         return packet
+
 
 def bsd_checksum(bytedata):
     """Very simple, not secure, but fast 2 byte checksum"""
