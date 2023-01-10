@@ -92,7 +92,7 @@ def manually_configure_radio(radio):
                                                 [0.0, 100.0], allow_default=True)
     radio.receive_timeout = set_param_from_input_range(radio.receive_timeout, f"Receiver timeout (currently {radio.receive_timeout} s)",
                                                        [0.0, 100.0], allow_default=True)
-    if not radio.rx_device:
+    if not radio.separate_rx:
         manually_configure_rfm9x(radio.tx_device)
     else:
         print(f"\n\t{yellow}{bold}TX Device Configuration:{normal}")
@@ -137,7 +137,7 @@ def print_radio_configuration(radio):
     print(f"\tAcknowledge delay = {radio.ack_delay} s")
     print(f"\tAcknowledge wait = {radio.ack_wait} s")
     print(f"\tReceive timeout = {radio.receive_timeout} s")
-    if not radio.rx_device:
+    if not radio.separate_rx:
         print_rfm9x_configuration(radio.tx_device)
     else:
         print(f"\t{yellow}{bold}TX Device Configuration:{normal}")

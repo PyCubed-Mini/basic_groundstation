@@ -41,65 +41,62 @@ def print_help():
 # setup
 
 
-print(f"\n{bold}{yellow}PyCubed-Mini Groundstation Shell{normal}\n")
+def gs_shell_radio_setup():
+    board_str = get_input_discrete(
+        f"""Select the board/radio:
+            {bold}(s){normal} satellite,
+            {bold}(f){normal} feather,
+            {bold}(p){normal} raspberry pi,
+            {bold}(t){normal} RPiGS TX,
+            {bold}(r){normal} RPiGS RX,
+            {bold}(c){normal} RPiGS TX and RX,
+            """,
+        ["s", "f", "p", "t", "r", "c"]
+    )
 
-board_str = get_input_discrete(
-    f"""Select the board/radio:
-        {bold}(s){normal} satellite,
-        {bold}(f){normal} feather,
-        {bold}(p){normal} raspberry pi,
-        {bold}(t){normal} RPiGS TX,
-        {bold}(r){normal} RPiGS RX,
-        {bold}(c){normal} RPiGS TX and RX,
-        """,
-    ["s", "f", "p", "t", "r", "c"]
-)
+    if board_str == "s":
+        spi, cs, reset = satellite_spi_config()
+        radio = initialize_radio(spi, cs, reset)
+        print(f"{bold}{green}Satellite{normal} selected")
+    elif board_str == "f":
+        spi, cs, reset = feather_spi_config()
+        radio = initialize_radio(spi, cs, reset)
+        print(f"{bold}{green}Feather{normal} selected")
+    elif board_str == "p":
+        spi, cs, reset = pi_spi_config()
+        radio = initialize_radio(spi, cs, reset)
+        print(f"{bold}{green}Raspberry Pi{normal} selected")
+    elif board_str == "t":
+        spi, cs, reset = rpigs_tx_spi_config()
+        rxtx_switch = RXTXSwitch(board.D26, board.D17, board.D27)
+        radio = initialize_radio(spi, cs, reset, rxtx_switch=rxtx_switch)
+        print(f"{bold}{green}Raspberry Pi TX{normal} selected")
+    elif board_str == "r":
+        spi, cs, reset = rpigs_rx_spi_config()
+        rxtx_switch = RXTXSwitch(board.D26, board.D17, board.D27)
+        radio = initialize_radio(spi, cs, reset, rxtx_switch=rxtx_switch)
+        print(f"{bold}{green}Raspberry Pi RX{normal} selected")
+    elif board_str == "c":
+        tx_spi, tx_cs, tx_reset = rpigs_tx_spi_config()
+        rx_spi, rx_cs, rx_reset = rpigs_rx_spi_config()
 
-if board_str == "s":
-    spi, cs, reset = satellite_spi_config()
-    radio = initialize_radio(spi, cs, reset)
-    print(f"{bold}{green}Satellite{normal} selected")
-elif board_str == "f":
-    spi, cs, reset = feather_spi_config()
-    radio = initialize_radio(spi, cs, reset)
-    print(f"{bold}{green}Feather{normal} selected")
-elif board_str == "p":
-    spi, cs, reset = pi_spi_config()
-    radio = initialize_radio(spi, cs, reset)
-    print(f"{bold}{green}Raspberry Pi{normal} selected")
-elif board_str == "t":
-    spi, cs, reset = rpigs_tx_spi_config()
-    rxtx_switch = RXTXSwitch(board.D26, board.D17, board.D27)
-    radio = initialize_radio(spi, cs, reset, rxtx_switch=rxtx_switch)
-    print(f"{bold}{green}Raspberry Pi TX{normal} selected")
-elif board_str == "r":
-    spi, cs, reset = rpigs_rx_spi_config()
-    rxtx_switch = RXTXSwitch(board.D26, board.D17, board.D27)
-    radio = initialize_radio(spi, cs, reset, rxtx_switch=rxtx_switch)
-    print(f"{bold}{green}Raspberry Pi RX{normal} selected")
-elif board_str == "c":
-    tx_spi, tx_cs, tx_reset = rpigs_tx_spi_config()
-    rx_spi, rx_cs, rx_reset = rpigs_rx_spi_config()
+        rxtx_switch = RXTXSwitch(board.D26, board.D17, board.D27)
+        radio = initialize_radio(tx_spi, tx_cs, tx_reset, rx_spi, rx_cs, rx_reset, rxtx_switch=rxtx_switch)
+        print(f"{bold}{green}Raspberry Pi TX and RX{normal} selected")
+    else:
+        raise ValueError(f"Board string {board_str} invalid")
 
-    rxtx_switch = RXTXSwitch(board.D26, board.D17, board.D27)
-    radio = initialize_radio(tx_spi, tx_cs, tx_reset, rx_spi, rx_cs, rx_reset, rxtx_switch=rxtx_switch)
-    print(f"{bold}{green}Raspberry Pi TX and RX{normal} selected")
-else:
-    raise ValueError(f"Board string {board_str} invalid")
-
-
-print_radio_configuration(radio)
-
-if get_input_discrete(
-        f"Change radio parameters? {bold}(y/N){normal}", ["", "y", "n"]) == "y":
-    manually_configure_radio(radio)
     print_radio_configuration(radio)
 
+    if get_input_discrete(
+            f"Change radio parameters? {bold}(y/N){normal}", ["", "y", "n"]) == "y":
+        manually_configure_radio(radio)
+        print_radio_configuration(radio)
 
-print_help()
+    return radio
 
 
-def gs_shell_main_loop():
+def gs_shell_main_loop(radio):
     verbose = True
     while True:
         try:
@@ -179,4 +176,8 @@ def gs_shell_main_loop():
             pass
 
 
-gs_shell_main_loop()
+if __name__ == "__main__":
+    print(f"\n{bold}{yellow}PyCubed-Mini Groundstation Shell{normal}\n")
+    radio = gs_shell_radio_setup()
+    print_help()
+    gs_shell_main_loop(radio)

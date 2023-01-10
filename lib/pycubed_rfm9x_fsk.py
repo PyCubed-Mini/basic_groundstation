@@ -685,8 +685,10 @@ class Radiohead:
 
         if rx_device is not None:
             self.rx_device = rx_device
+            self.separate_rx = True
         else:
             self.rx_device = tx_device
+            self.separate_rx = False
 
         self.rxtx_switch = rxtx_switch
 
