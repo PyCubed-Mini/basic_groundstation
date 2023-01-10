@@ -7,6 +7,7 @@ sys.path.append("lib")  # noqa
 from shell_utils import *
 from gs_shell_tasks import *
 from gs_setup import *
+from lib.rxtx_switch import RXTXSwitch
 import tasko
 
 try:
@@ -49,30 +50,43 @@ board_str = get_input_discrete(
         {bold}(p){normal} raspberry pi,
         {bold}(t){normal} RPiGS TX,
         {bold}(r){normal} RPiGS RX,
+        {bold}(c){normal} RPiGS TX and RX,
         """,
     ["s", "f", "p", "t", "r"]
 )
 
 if board_str == "s":
     spi, cs, reset = satellite_spi_config()
+    radio = initialize_radio(spi, cs, reset)
     print(f"{bold}{green}Satellite{normal} selected")
 elif board_str == "f":
     spi, cs, reset = feather_spi_config()
+    radio = initialize_radio(spi, cs, reset)
     print(f"{bold}{green}Feather{normal} selected")
 elif board_str == "p":
     spi, cs, reset = pi_spi_config()
+    radio = initialize_radio(spi, cs, reset)
     print(f"{bold}{green}Raspberry Pi{normal} selected")
 elif board_str == "t":
     spi, cs, reset = rpigs_tx_spi_config()
-    print(f"{bold}{green}Raspberry Pi{normal} selected")
+    rxtx_switch = RXTXSwitch(board.D26, board.D17, board.D27)
+    radio = initialize_radio(spi, cs, reset, rxtx_switch=rxtx_switch)
+    print(f"{bold}{green}Raspberry Pi TX{normal} selected")
 elif board_str == "r":
     spi, cs, reset = rpigs_rx_spi_config()
-    print(f"{bold}{green}Raspberry Pi{normal} selected")
+    rxtx_switch = RXTXSwitch(board.D26, board.D17, board.D27)
+    radio = initialize_radio(spi, cs, reset, rxtx_switch=rxtx_switch)
+    print(f"{bold}{green}Raspberry Pi RX{normal} selected")
+elif board_str == "c":
+    tx_spi, tx_cs, tx_reset = rpigs_tx_spi_config()
+    rx_spi, rx_cs, rx_reset = rpigs_rx_spi_config()
+
+    rxtx_switch = RXTXSwitch(board.D26, board.D17, board.D27)
+    radio = initialize_radio(tx_spi, tx_cs, tx_reset, rx_spi, rx_cs, rx_reset, rxtx_switch=rxtx_switch)
+    print(f"{bold}{green}Raspberry Pi TX and RX{normal} selected")
 else:
     raise ValueError(f"Board string {board_str} invalid")
 
-
-radio = initialize_radio(spi, cs, reset)
 
 print_radio_configuration(radio)
 
