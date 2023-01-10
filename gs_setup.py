@@ -20,7 +20,7 @@ def initialize_rfm9x(spi, cs, reset):
         cs,
         reset,
         rf_config.FREQUENCY,
-        checksum=rf_config.CHECKSUM)
+    )
 
     # configure to match satellite
     radio.tx_power = rf_config.TX_POWER
