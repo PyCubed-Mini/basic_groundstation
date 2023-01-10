@@ -275,7 +275,7 @@ def handle_memory_buffered(header, data, payload):
         if payload != data.msg_last:
             data.msg += payload
         else:
-            data.debug('Repeated payload')
+            print('Repeated payload')
 
     if header == headers.MEMORY_BUFFERED_END:
         data.msg_last = bytes([])
@@ -289,7 +289,7 @@ def handle_disk_buffered(header, data, response):
         if response != data.cmsg_last:
             data.cmsg += response
         else:
-            data.debug('Repeated payload')
+            print('Repeated payload')
         data.cmsg_last = response
 
     if header == headers.DISK_BUFFERED_END:
