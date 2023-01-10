@@ -846,7 +846,7 @@ class Radiohead:
                     await tasko.sleep(0)
         else:
             start = time.monotonic()
-            while not timed_out and not self.tx_done():
+            while not timed_out and not self.tx_device.tx_done():
                 if time.monotonic() - start >= self.xmit_timeout:
                     timed_out = True
                 else:
