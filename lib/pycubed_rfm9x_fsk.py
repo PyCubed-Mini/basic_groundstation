@@ -830,6 +830,7 @@ class Radiohead:
             payload = payload + checksum
 
         # Write payload.
+        print(f"RFM9X: Sending {str(payload)}")
         self.tx_device._write_from(_RH_RF95_REG_00_FIFO, payload)
 
         # Turn on transmit mode to send out the packet.
