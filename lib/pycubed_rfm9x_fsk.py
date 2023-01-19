@@ -751,20 +751,23 @@ class Radiohead:
         """
 
     def listen(self):
-        self.tx_device.listen()
+        if self.separate_rx:
+            self.tx_device.idle()
         self.rx_device.listen()
         if self.rxtx_switch:
             self.rxtx_switch.receive()
 
     def idle(self):
         self.tx_device.idle()
-        self.rx_device.idle()
+        if self.separate_rx:
+            self.rx_device.idle()
         if self.rxtx_switch:
             self.rxtx_switch.idle()
 
     def transmit(self):
+        if self.separate_rx:
+            self.rx_device.idle()
         self.tx_device.transmit()
-        self.rx_device.idle()
         if self.rxtx_switch:
             self.rxtx_switch.transmit()
 
