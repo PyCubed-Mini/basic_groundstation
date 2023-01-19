@@ -1021,6 +1021,8 @@ class Radiohead:
             if self.ack_delay is not None:
                 await tasko.sleep(self.ack_delay)
             # send ACK packet to sender (data is b'!')
+            if debug:
+                print("RFM9X: Sending ACK")
             await self.send(
                 b"!",
                 destination=packet[2],
@@ -1040,6 +1042,9 @@ class Radiohead:
 
         if (not with_header):  # skip the header if not wanted
             packet = packet[5:]
+
+        if debug:
+            print(f"RFM9X: Recieved {str(packet)}")
 
         return packet
 
