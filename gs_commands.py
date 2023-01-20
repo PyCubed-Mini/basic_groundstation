@@ -87,7 +87,7 @@ async def request_file(radio, path, debug=False):
 
     if debug:
         if success:
-            print(f"{bold}REQUEST_FILE:{normal} {path}\n\nContents:\n{response}")
+            print(f"{bold}REQUEST_FILE:{normal} {path}\n\nContents:\n{decode_message(response)}")
         else:
             print(f"{bold}REQUEST_FILE:{normal} {path} {red}FAILED{normal}")
 
@@ -243,18 +243,22 @@ async def wait_for_message(radio, max_rx_fails=10, debug=False):
 
 def print_message(header, message):
     if header == headers.DEFAULT:
-        print(f"Default: {message}")
+        print(f"Default: {decode_message(message)}")
     elif header == headers.BEACON:
         print(beacon_str(message))
     elif header == headers.MEMORY_BUFFERED_START or header == headers.DISK_BUFFERED_START:
         print(f"Buffered:\n")
-        try:
-            print(message.decode(encoding="utf-8", errors="strict"))
-        except UnicodeDecodeError:
-            print(message.hex(" "))
+        decode_message(message)
 
     else:
-        print(f"Header {header} unknown: {message}")
+        print(f"Header {header} unknown: {decode_message(message)}")
+
+
+def decode_message(message):
+    try:
+        return message.decode(encoding="utf-8", errors="strict")
+    except UnicodeDecodeError:
+        return message.hex(" ")
 
 
 def beacon_str(beacon):
