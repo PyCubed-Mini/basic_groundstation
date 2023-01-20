@@ -95,9 +95,9 @@ def manually_configure_radio(radio):
     if not radio.separate_rx:
         manually_configure_rfm9x(radio.tx_device)
     else:
-        print(f"\n\t{yellow}{bold}TX Device Configuration:{normal}")
+        print(f"\n{yellow}{bold}TX Device Configuration:{normal}")
         manually_configure_rfm9x(radio.tx_device)
-        print(f"\n\t{yellow}{bold}RX Device Configuration:{normal}")
+        print(f"\n{yellow}{bold}RX Device Configuration:{normal}")
         manually_configure_rfm9x(radio.rx_device)
 
 
