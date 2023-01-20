@@ -780,7 +780,8 @@ class Radiohead:
         destination=None,
         node=None,
         identifier=None,
-        flags=None
+        flags=None,
+        debug=False
     ):
         """Send a string of data using the transmitter.
         You can only send 57 bytes at a time
@@ -833,7 +834,8 @@ class Radiohead:
             payload = payload + checksum
 
         # Write payload.
-        print(f"RFM9X: Sending {str(payload)}")
+        if debug:
+            print(f"RFM9X: Sending {str(payload)}")
         self.tx_device._write_from(_RH_RF95_REG_00_FIFO, payload)
 
         # Turn on transmit mode to send out the packet.
@@ -878,7 +880,7 @@ class Radiohead:
         self.sequence_number = (self.sequence_number + 1) & 0xFF
         while not got_ack and retries_remaining:
             self.identifier = self.sequence_number
-            await self.send(data, keep_listening=True)
+            await self.send(data, keep_listening=True, debug=debug)
             # Don't look for ACK from Broadcast message
             if self.destination == _RH_BROADCAST_ADDRESS:
                 got_ack = True
