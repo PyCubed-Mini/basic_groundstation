@@ -97,7 +97,7 @@ async def request_file(radio, path, debug=False):
 async def upload_file(radio, local_path, satellite_path, debug=False):
     msg = DiskBufferedMessage(local_path)
 
-    success = await send_message(radio, msg, debug=debug)
+    success = await send_message(radio, msg, debug=debug, packet_delay=0.1)
 
     if success:
         success &= await move_file(radio, "/sd/disk_buffered_message", satellite_path, debug=debug)
@@ -168,7 +168,7 @@ async def receive(rfm9x, with_ack=True, debug=False):
     return packet[0:6], packet[6:]
 
 
-async def send_message(radio, msg, debug=False):
+async def send_message(radio, msg, debug=False, packet_delay=0):
     success = True
     while True:
         packet, with_ack = msg.packet()
@@ -189,6 +189,8 @@ async def send_message(radio, msg, debug=False):
 
         if msg.done():
             break
+
+        time.sleep(packet_delay)
 
     return success
 
