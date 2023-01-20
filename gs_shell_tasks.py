@@ -24,7 +24,7 @@ async def read_loop(radio, debug=False):
 
     while True:
         header, message = await wait_for_message(radio, debug=debug)
-        if header or message:
+        if header or (message and len(message) > 0):
             print_message(header, message)
 
 
