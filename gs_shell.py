@@ -29,7 +29,7 @@ prompt_options = {"Receive loop": ("r", "receive"),
                   "Get time": ("gt", "gettime"),
                   "Help": ("h", "print_help"),
                   "Toggle verbose debug prints": ("v", "verbose"),
-                  "Reconfigure radio": ("config"),
+                  "Reconfigure radio": ("config",),
                   "Quit": ("q", "quit")}
 flattend_prompt_options = [v for pov in prompt_options.values() for v in pov]
 
