@@ -66,7 +66,7 @@ async def move_file(radio, source_path, destination_path, debug=False):
 
     if debug:
         if success:
-            print(f"{bold}MOVE_FILE Response:{normal} {response}")
+            print(f"{bold}MOVE_FILE Response:{normal} {decode_message(response)}")
         else:
             print(f"{bold}MOVE_FILE Response:{normal} {red}FAILED{normal}")
 
