@@ -176,6 +176,7 @@ def gs_shell_main_loop(radio):
 
         except KeyboardInterrupt:
             print(f"\n{red}Enter q to quit{normal}")
+            radio.idle()
             tasko.reset()
             pass
 

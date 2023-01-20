@@ -642,7 +642,7 @@ class RFM9x:
             idx = self._bw_bins_kHz.index(val)
         except ValueError:
             raise ValueError(
-                f"Invalid recieve bandwidth {val}, must be one of {self._bw_bins_kHz}")
+                f"Invalid receive bandwidth {val}, must be one of {self._bw_bins_kHz}")
 
         self._bw_mantissa = self._bw_mant_bins[idx]
         self._bw_exponent = self._bw_exp_bins[idx]
@@ -1048,7 +1048,7 @@ class Radiohead:
             packet = packet[5:]
 
         if debug:
-            print(f"RFM9X: Recieved {str(packet)}")
+            print(f"RFM9X: Received {str(packet)}")
 
         return packet
 
