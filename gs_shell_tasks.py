@@ -24,7 +24,8 @@ async def read_loop(radio, debug=False):
 
     while True:
         header, message = await wait_for_message(radio, debug=debug)
-        print_message(header, message)
+        if header or message:
+            print_message(header, message)
 
 
 def human_time_stamp():
