@@ -163,11 +163,11 @@ async def receive(rfm9x, with_ack=True, debug=False):
     """Recieve a packet.  Returns None if no packet was received.
     Otherwise returns (header, payload)"""
     packet = await rfm9x.receive(with_ack=with_ack, with_header=True, debug=debug)
-    print(packet[0:6])
-    print(packet[5])
+    print(packet[0:5])
+    print(packet[4])
     if packet is None:
         return None
-    return packet[0:6], packet[6:]
+    return packet[0:5], packet[6:]
 
 
 async def send_message(radio, msg, debug=False, packet_delay=0):
@@ -226,7 +226,7 @@ async def wait_for_message(radio, max_rx_fails=10, debug=False):
 
         header, payload = res
 
-        oh = header[5]
+        oh = header[4]
         print(oh)
         if oh == headers.DEFAULT or oh == headers.BEACON:
             return oh, payload
