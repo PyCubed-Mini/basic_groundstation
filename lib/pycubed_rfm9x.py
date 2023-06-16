@@ -405,7 +405,6 @@ class RFM9x:
                 raise RuntimeError(f"Overflow reading into buffer of length {len(buf)}")
         return idx
 
-
     def _read_u8(self, address: int) -> int:
         # Read a single byte from the provided address and return it.
         self._read_into(address, self._BUFFER, length=1)
@@ -1186,6 +1185,7 @@ class Radiohead:
     async def receive(
         self, *, keep_listening=True, with_header=False, with_ack=False, timeout=None, debug=False
     ):
+        return self.rx_device.receive(keep_listening, with_header, with_ack, timeout)
         """Wait to receive a packet from the receiver. If a packet is found the payload bytes
         are returned, otherwise None is returned(which indicates the timeout elapsed with no
         reception).
