@@ -1185,10 +1185,10 @@ class Radiohead:
     async def receive(
         self, *, keep_listening=True, with_header=False, with_ack=False, timeout=None, debug=False
     ):
-        return self.rx_device.receive(keep_listening=keep_listening,
-                                      with_header=with_header,
-                                      with_ack=with_ack,
-                                      timeout=timeout)
+        return await self.rx_device.receive(keep_listening=keep_listening,
+                                            with_header=with_header,
+                                            with_ack=with_ack,
+                                            timeout=timeout)
         """Wait to receive a packet from the receiver. If a packet is found the payload bytes
         are returned, otherwise None is returned(which indicates the timeout elapsed with no
         reception).
