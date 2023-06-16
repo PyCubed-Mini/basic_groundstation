@@ -1185,69 +1185,142 @@ class Radiohead:
     async def receive(
         self, *, keep_listening=True, with_header=False, with_ack=False, timeout=None, debug=False
     ):
-        return await self.rx_device.receive(keep_listening=keep_listening,
-                                            with_header=with_header,
-                                            with_ack=with_ack,
-                                            timeout=timeout)
-        """Wait to receive a packet from the receiver. If a packet is found the payload bytes
-        are returned, otherwise None is returned(which indicates the timeout elapsed with no
-        reception).
-        If keep_listening is True (the default) the chip will immediately enter listening mode
-        after reception of a packet, otherwise it will fall back to idle mode and ignore any
-        future reception.
-        All packets must have a 4-byte header for compatibilty with the
-        RadioHead library.
-        The header consists of 4 bytes(To, From, ID, Flags). The default setting will  strip
-        the header before returning the packet to the caller.
-        If with_header is True then the 4 byte header will be returned with the packet.
-        The payload then begins at packet[4].
-        If with_ack is True, send an ACK after receipt(Reliable Datagram mode)
-        """
+        packet = await self.rx_device.receive(keep_listening=keep_listening,
+                                              with_header=with_header,
+                                              with_ack=with_ack,
+                                              timeout=timeout)
 
-        if timeout is None:
-            timeout = self.receive_timeout
+        packet_length = self._read_u8(_RH_RF95_REG_13_RX_NB_BYTES)
+        if packet_length < 6:
+            print(f"RFM9x: Incomplete message (packet_length = {packet_length} < 6), packet = {str(packet)}")
+            return None
 
-        # get starting time
-        if HAS_SUPERVISOR:
-            start = supervisor.ticks_ms()
-        else:
-            start = time.monotonic()
+        internal_packet_length = packet[0]
+        if internal_packet_length != packet_length - 1:
+            print(
+                f"RFM9x: received packet length ({packet_length})" +
+                f"does not match transmitted packet length ({internal_packet_length}), " + 
+                f"packet = {str(packet)}"
+                  )
+            return None
 
-        packet = None
-        # Make sure we are listening for packets (and not transmitting).
-        self.listen()
-
-        while True:
-            # check for valid packets
-            if self.rx_device.rx_done():
-                # save last RSSI reading
-                self.last_rssi = self.rx_device.rssi
-                # Enter idle mode to stop receiving other packets.
-                self.idle()
-                # read packet
-                packet = await self._process_packet(with_header=with_header, with_ack=with_ack, debug=debug)
-                if packet is not None:
-                    break  # packet valid - return it
-                # packet invalid - continue listening
-                self.listen()
-
-            # check if we have timed out
-            if ((HAS_SUPERVISOR and (ticks_diff(supervisor.ticks_ms(), start) >= timeout * 1000)) or
-                    (not HAS_SUPERVISOR and (time.monotonic() - start >= timeout))):
-                # timed out
+        # Reject if the packet does not pass the checksum
+        if self.checksum:
+            if not bsd_checksum(packet[:-2]) == packet[-2:]:
                 if debug:
-                    print("RFM9X: RX timed out")
-                break
+                    print(
+                        f"RFM9X: Checksum failed, packet = {str(packet)}, bsd_checksum(packet[:-2])" +
+                        f" = {bsd_checksum(packet[:-2])}, packet[-2:] = {packet[-2:]}")
+                self.checksum_error_count += 1
+                return None
+            else:
+                # passed the checksum - remove it before continuing
+                packet = packet[:-2]
 
-            await tasko.sleep(0)
+        # Reject if the packet wasn't sent to my address
+        if (self.node != _RH_BROADCAST_ADDRESS and
+                packet[1] != _RH_BROADCAST_ADDRESS and
+                packet[1] != self.node):
+            if debug:
+                print(
+                    "RFM9X: Incorrect Address " +
+                    f"(packet address = {packet[1]} != my address = {self.node}), " +
+                    f"packet = {str(packet)}")
+            return None
 
-        # Exit
-        if keep_listening:
-            self.listen()
-        else:
-            self.idle()
+        # send ACK unless this was an ACK or a broadcast
+        if (with_ack and
+                ((packet[4] & _RH_FLAGS_ACK) == 0) and
+                (packet[1] != _RH_BROADCAST_ADDRESS)):
+            # delay before sending Ack to give receiver a chance to get ready
+            if self.ack_delay is not None:
+                await tasko.sleep(self.ack_delay)
+            # send ACK packet to sender (data is b'!')
+            if debug:
+                print("RFM9X: Sending ACK")
+            await self.send(
+                b"!",
+                destination=packet[2],
+                node=packet[1],
+                identifier=packet[3],
+                flags=(packet[4] | _RH_FLAGS_ACK),
+            )
+            # reject this packet if its identifier was the most recent one from its source
+            # TODO: Make sure identifiers are being changed for each packet
+            if (self.seen_ids[packet[2]] == packet[3]) and (
+                    packet[4] & _RH_FLAGS_RETRY):
+                if debug:
+                    print(f"RFM9X: dropping retried packet, packet = {str(packet)}")
+                return None
+            else:  # save the packet identifier for this source
+                self.seen_ids[packet[2]] = packet[3]
+
+        if (not with_header):  # skip the header if not wanted
+            packet = packet[5:]
+
+        if debug:
+            print(f"RFM9X: Received {str(packet)}")
 
         return packet
+        # """Wait to receive a packet from the receiver. If a packet is found the payload bytes
+        # are returned, otherwise None is returned(which indicates the timeout elapsed with no
+        # reception).
+        # If keep_listening is True (the default) the chip will immediately enter listening mode
+        # after reception of a packet, otherwise it will fall back to idle mode and ignore any
+        # future reception.
+        # All packets must have a 4-byte header for compatibilty with the
+        # RadioHead library.
+        # The header consists of 4 bytes(To, From, ID, Flags). The default setting will  strip
+        # the header before returning the packet to the caller.
+        # If with_header is True then the 4 byte header will be returned with the packet.
+        # The payload then begins at packet[4].
+        # If with_ack is True, send an ACK after receipt(Reliable Datagram mode)
+        # """
+
+        # if timeout is None:
+        #     timeout = self.receive_timeout
+
+        # # get starting time
+        # if HAS_SUPERVISOR:
+        #     start = supervisor.ticks_ms()
+        # else:
+        #     start = time.monotonic()
+
+        # packet = None
+        # # Make sure we are listening for packets (and not transmitting).
+        # self.listen()
+
+        # while True:
+        #     # check for valid packets
+        #     if self.rx_device.rx_done():
+        #         # save last RSSI reading
+        #         self.last_rssi = self.rx_device.rssi
+        #         # Enter idle mode to stop receiving other packets.
+        #         self.idle()
+        #         # read packet
+        #         packet = await self._process_packet(with_header=with_header, with_ack=with_ack, debug=debug)
+        #         if packet is not None:
+        #             break  # packet valid - return it
+        #         # packet invalid - continue listening
+        #         self.listen()
+
+        #     # check if we have timed out
+        #     if ((HAS_SUPERVISOR and (ticks_diff(supervisor.ticks_ms(), start) >= timeout * 1000)) or
+        #             (not HAS_SUPERVISOR and (time.monotonic() - start >= timeout))):
+        #         # timed out
+        #         if debug:
+        #             print("RFM9X: RX timed out")
+        #         break
+
+        #     await tasko.sleep(0)
+
+        # # Exit
+        # if keep_listening:
+        #     self.listen()
+        # else:
+        #     self.idle()
+
+        # return packet
 
     async def _process_packet(self, with_header=False, with_ack=False, debug=False):
 

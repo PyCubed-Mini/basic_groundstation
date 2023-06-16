@@ -165,8 +165,8 @@ async def receive(rfm9x, with_ack=True, debug=False):
     packet = await rfm9x.receive(with_ack=with_ack, with_header=True, debug=debug)
     if packet is None:
         return None
-    print(packet[0:5])
     print(packet[4])
+    print(packet)
     return packet[0:5], packet[6:]
 
 
