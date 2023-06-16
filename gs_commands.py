@@ -163,7 +163,8 @@ async def receive(rfm9x, with_ack=True, debug=False):
     """Recieve a packet.  Returns None if no packet was received.
     Otherwise returns (header, payload)"""
     packet = await rfm9x.receive(with_ack=with_ack, with_header=True, debug=debug)
-    print(packet)
+    print(packet[0:6])
+    print(packet[5])
     if packet is None:
         return None
     return packet[0:6], packet[6:]
