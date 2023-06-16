@@ -123,12 +123,12 @@ def manually_configure_rfm9x(device):
 def print_rfm9x_configuration(device):
     print(f"\tFrequency = {device.frequency_mhz} MHz")
     print(f"\tPower = {device.tx_power} dBm")
-    print(f"\tBitrate = {device.bitrate} Hz")
-    print(f"\tFrequency Deviation = {device.frequency_deviation}")
-    print(f"\tRX filter bandwidth = {device.rx_bandwidth}")
-    print(f"\tLNA Gain [max = 1, min = 6] = {device.lna_gain}")
+    # print(f"\tBitrate = {device.bitrate} Hz")
+    # print(f"\tFrequency Deviation = {device.frequency_deviation}")
+    # print(f"\tRX filter bandwidth = {device.rx_bandwidth}")
+    # print(f"\tLNA Gain [max = 1, min = 6] = {device.lna_gain}")
     print(f"\tPreamble Length = {device.preamble_length}")
-    print(f"\tAFC enabled = {device.afc_enable}")
+    # print(f"\tAFC enabled = {device.afc_enable}")
 
 
 def print_radio_configuration(radio):

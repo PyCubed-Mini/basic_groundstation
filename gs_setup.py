@@ -41,7 +41,7 @@ def initialize_rfm9x(spi, cs, reset):
 
 def initialize_radiohead(tx_device, rx_device=None, rxtx_switch=None):
 
-    rh = pycubed_rfm9x_fsk.Radiohead(
+    rh = pycubed_rfm9x.Radiohead(
         tx_device,
         rx_device=rx_device,
         rxtx_switch=rxtx_switch,
