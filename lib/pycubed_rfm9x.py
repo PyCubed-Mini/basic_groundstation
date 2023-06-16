@@ -1190,7 +1190,7 @@ class Radiohead:
                                               with_ack=with_ack,
                                               timeout=timeout)
 
-        packet_length = self._read_u8(_RH_RF95_REG_13_RX_NB_BYTES)
+        packet_length = self.rx_device._read_u8(_RH_RF95_REG_13_RX_NB_BYTES)
         if packet_length < 6:
             print(f"RFM9x: Incomplete message (packet_length = {packet_length} < 6), packet = {str(packet)}")
             return None
