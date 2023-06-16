@@ -6,6 +6,7 @@ import board
 import busio
 import digitalio
 from lib import pycubed_rfm9x_fsk
+from lib import pycubed_rfm9x
 from lib.configuration import radio_configuration as rf_config
 from shell_utils import bold, normal
 
@@ -15,18 +16,24 @@ def initialize_rfm9x(spi, cs, reset):
     Initialize the radio - uses lib/configuration/radio_configuration to configure with defaults
     """
 
-    rfm_device = pycubed_rfm9x_fsk.RFM9x(
+    rfm_device = pycubed_rfm9x.RFM9x(
         spi,
         cs,
         reset,
         rf_config.FREQUENCY,
     )
+    # rfm_device = pycubed_rfm9x_fsk.RFM9x(
+    #     spi,
+    #     cs,
+    #     reset,
+    #     rf_config.FREQUENCY,
+    # )
 
     # configure to match satellite
     rfm_device.tx_power = rf_config.TX_POWER
-    rfm_device.bitrate = rf_config.BITRATE
-    rfm_device.frequency_deviation = rf_config.FREQUENCY_DEVIATION
-    rfm_device.rx_bandwidth = rf_config.RX_BANDWIDTH
+    # rfm_device.bitrate = rf_config.BITRATE
+    # rfm_device.frequency_deviation = rf_config.FREQUENCY_DEVIATION
+    # rfm_device.rx_bandwidth = rf_config.RX_BANDWIDTH
     rfm_device.preamble_length = rf_config.PREAMBLE_LENGTH
 
     return rfm_device
