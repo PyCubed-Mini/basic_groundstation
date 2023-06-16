@@ -1230,32 +1230,32 @@ class Radiohead:
                     f"packet = {str(packet)}")
             return None
 
-        # send ACK unless this was an ACK or a broadcast
-        if (with_ack and
-                ((packet[4] & _RH_FLAGS_ACK) == 0) and
-                (packet[1] != _RH_BROADCAST_ADDRESS)):
-            # delay before sending Ack to give receiver a chance to get ready
-            if self.ack_delay is not None:
-                await tasko.sleep(self.ack_delay)
-            # send ACK packet to sender (data is b'!')
-            if debug:
-                print("RFM9X: Sending ACK")
-            await self.send(
-                b"!",
-                destination=packet[2],
-                node=packet[1],
-                identifier=packet[3],
-                flags=(packet[4] | _RH_FLAGS_ACK),
-            )
-            # reject this packet if its identifier was the most recent one from its source
-            # TODO: Make sure identifiers are being changed for each packet
-            if (self.seen_ids[packet[2]] == packet[3]) and (
-                    packet[4] & _RH_FLAGS_RETRY):
-                if debug:
-                    print(f"RFM9X: dropping retried packet, packet = {str(packet)}")
-                return None
-            else:  # save the packet identifier for this source
-                self.seen_ids[packet[2]] = packet[3]
+        # # send ACK unless this was an ACK or a broadcast
+        # if (with_ack and
+        #         ((packet[4] & _RH_FLAGS_ACK) == 0) and
+        #         (packet[1] != _RH_BROADCAST_ADDRESS)):
+        #     # delay before sending Ack to give receiver a chance to get ready
+        #     if self.ack_delay is not None:
+        #         await tasko.sleep(self.ack_delay)
+        #     # send ACK packet to sender (data is b'!')
+        #     if debug:
+        #         print("RFM9X: Sending ACK")
+        #     await self.send(
+        #         b"!",
+        #         destination=packet[2],
+        #         node=packet[1],
+        #         identifier=packet[3],
+        #         flags=(packet[4] | _RH_FLAGS_ACK),
+        #     )
+        #     # reject this packet if its identifier was the most recent one from its source
+        #     # TODO: Make sure identifiers are being changed for each packet
+        #     if (self.seen_ids[packet[2]] == packet[3]) and (
+        #             packet[4] & _RH_FLAGS_RETRY):
+        #         if debug:
+        #             print(f"RFM9X: dropping retried packet, packet = {str(packet)}")
+        #         return None
+        #     else:  # save the packet identifier for this source
+        #         self.seen_ids[packet[2]] = packet[3]
 
         if (not with_header):  # skip the header if not wanted
             packet = packet[5:]
