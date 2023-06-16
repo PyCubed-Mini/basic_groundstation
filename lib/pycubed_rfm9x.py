@@ -395,6 +395,17 @@ class RFM9x:
             device.write(self._BUFFER, end=1)
             device.readinto(buf, end=length)
 
+    def _read_until_flag(self, address, buf, flag):
+        # read bytes from the given address until flag is true
+        idx = 0
+        while not flag():
+            buf[idx] = self._read_u8(address)
+            idx += 1
+            if idx > len(buf):
+                raise RuntimeError(f"Overflow reading into buffer of length {len(buf)}")
+        return idx
+
+
     def _read_u8(self, address: int) -> int:
         # Read a single byte from the provided address and return it.
         self._read_into(address, self._BUFFER, length=1)
