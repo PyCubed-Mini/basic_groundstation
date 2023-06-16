@@ -1185,11 +1185,13 @@ class Radiohead:
     async def receive(
         self, *, keep_listening=True, with_header=False, with_ack=False, timeout=None, debug=False
     ):
+        self.listen()
         packet = await self.rx_device.receive(keep_listening=keep_listening,
                                               with_header=with_header,
                                               with_ack=with_ack,
                                               timeout=timeout)
-
+        if packet is None:
+            return None
         packet_length = self.rx_device._read_u8(_RH_RF95_REG_13_RX_NB_BYTES)
         if packet_length < 6:
             print(f"RFM9x: Incomplete message (packet_length = {packet_length} < 6), packet = {str(packet)}")
