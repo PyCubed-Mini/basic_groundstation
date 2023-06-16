@@ -128,7 +128,7 @@ _TICKS_PERIOD = const(1 << 29)
 _TICKS_MAX = const(_TICKS_PERIOD - 1)
 _TICKS_HALFPERIOD = const(_TICKS_PERIOD // 2)
 
-_MAX_FIFO_LENGTH = 66
+_MAX_FIFO_LENGTH = 256
 
 # Disable the too many instance members warning.  Pylint has no knowledge
 # of the context and is merely guessing at the proper amount of members.  This
@@ -1197,15 +1197,6 @@ class Radiohead:
             print(f"RFM9x: Incomplete message (packet_length = {packet_length} < 6), packet = {str(packet)}")
             return None
 
-        internal_packet_length = packet[0]
-        if internal_packet_length != packet_length - 1:
-            print(
-                f"RFM9x: received packet length ({packet_length})" +
-                f"does not match transmitted packet length ({internal_packet_length}), " + 
-                f"packet = {str(packet)}"
-                  )
-            return None
-
         # Reject if the packet does not pass the checksum
         if self.checksum:
             if not bsd_checksum(packet[:-2]) == packet[-2:]:
@@ -1221,12 +1212,12 @@ class Radiohead:
 
         # Reject if the packet wasn't sent to my address
         if (self.node != _RH_BROADCAST_ADDRESS and
-                packet[1] != _RH_BROADCAST_ADDRESS and
-                packet[1] != self.node):
+                packet[0] != _RH_BROADCAST_ADDRESS and
+                packet[0] != self.node):
             if debug:
                 print(
                     "RFM9X: Incorrect Address " +
-                    f"(packet address = {packet[1]} != my address = {self.node}), " +
+                    f"(packet address = {packet[0]} != my address = {self.node}), " +
                     f"packet = {str(packet)}")
             return None
 
