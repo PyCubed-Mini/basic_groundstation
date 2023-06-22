@@ -167,7 +167,7 @@ async def receive(rfm9x, with_ack=True, debug=False):
         return None
     print(packet[4])
     print(packet)
-    return packet[0:5], packet[6:]
+    return packet[0:5], packet[5:]
 
 
 async def send_message(radio, msg, debug=False, packet_delay=0):
