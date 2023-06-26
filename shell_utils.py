@@ -111,12 +111,12 @@ def manually_configure_rfm9x(device):
                                                        [f"{i}" for i in range(5, 9)],
                                                        allow_default=True)
     device.spreading_factor = set_param_from_input_discrete(device.spreading_factor,
-                                                            f"current spreading rate {device.spreading_factor}",
+                                                            f"current spreading factor {device.spreading_factor}",
                                                             [f"{i}" for i in range(6, 13)],
                                                             allow_default=True)
     device.signal_bandwidth = set_param_from_input_discrete(device.signal_bandwidth,
                                                             f"signal bandwidth currently {device.signal_bandwidth}",
-                                                            [7800, 10400, 15600, 20800, 31250, 41700, 62500, 125000, 250000],
+                                                            ["7800", "10400", "15600", "20800", "31250", "41700", "62500", "125000", "250000"],
                                                             allow_default=True)
     # device.bitrate = set_param_from_input_range(device.bitrate, f"Bitrate (currently {device.bitrate} bps)",
     #                                             [500, 300000], allow_default=True)
