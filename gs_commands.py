@@ -239,6 +239,10 @@ async def wait_for_message(radio, max_rx_fails=10, debug=False):
             handle_disk_buffered(oh, data, payload)
             if oh == headers.DISK_BUFFERED_END:
                 return headers.DISK_BUFFERED_START, data.cmsg
+        elif oh == headers.IMAGE_START or oh == headers.IMAGE_MID or oh == headers.IMAGE_END:
+            handle_image(oh, data, payload)
+            if oh == headers.IMAGE_END:
+                return headers.IMAGE_START, data.cmsg
         else:
             print(f"Unrecognized header {oh}")
             return oh, payload
@@ -298,6 +302,31 @@ def handle_disk_buffered(header, data, response):
     else:
         if response != data.cmsg_last:
             data.cmsg += response
+        else:
+            print('Repeated payload')
+        data.cmsg_last = response
+
+    if header == headers.DISK_BUFFERED_END:
+        data.cmsg_last = bytes([])
+
+
+def handle_image(header, data, response):
+    if header == headers.DISK_BUFFERED_START:
+        data.cmsg = response
+        data.cmsg_last = response
+        try:
+            with open("image_test.jpeg", "wb") as fd:
+                fd.write(response)
+        except Exception as e:
+            print(f"failed to create file: {e}")
+    else:
+        if response != data.cmsg_last:
+            data.cmsg += response
+            try:
+                with open("image_test.jpeg", "ab") as fd:
+                    fd.write(response)
+            except Exception as e:
+                print(f"failed to write to image: {e}")
         else:
             print('Repeated payload')
         data.cmsg_last = response
