@@ -1148,41 +1148,42 @@ class Radiohead:
         The packet header is automatically generated.
         If enabled, the packet transmission will be retried on failure
         """
-        if self.ack_retries:
-            retries_remaining = self.ack_retries
-        else:
-            retries_remaining = 1
-        got_ack = False
-        self.sequence_number = (self.sequence_number + 1) & 0xFF
-        while not got_ack and retries_remaining:
-            self.identifier = self.sequence_number
-            await self.send(data, keep_listening=True, debug=debug)
-            # Don't look for ACK from Broadcast message
-            if self.destination == _RH_BROADCAST_ADDRESS:
-                got_ack = True
-            else:
-                # wait for a packet from our destination
-                ack_packet = await self.receive(
-                    timeout=self.ack_wait, with_header=True, debug=debug)
-                if ack_packet is not None:
-                    if ack_packet[4] & _RH_FLAGS_ACK:
-                        # check the ID
-                        if ack_packet[3] == self.identifier:
-                            got_ack = True
-                            break
-                    if debug:
-                        print(f"Invalid ACK packet {str(ack_packet)}")
-            # pause before next retry -- random delay
-            if not got_ack:
-                # delay by random amount before next try
-                await tasko.sleep(self.ack_wait * random.random())
-                if debug:
-                    print(f"No ACK, retrying send - retries remaining: {retries_remaining}")
-            retries_remaining = retries_remaining - 1
-            # set retry flag in packet header
-            self.flags |= _RH_FLAGS_RETRY
-        self.flags = 0  # clear flags
-        return got_ack
+        # if self.ack_retries:
+        #     retries_remaining = self.ack_retries
+        # else:
+        #     retries_remaining = 1
+        # got_ack = False
+        # self.sequence_number = (self.sequence_number + 1) & 0xFF
+        # while not got_ack and retries_remaining:
+        #     self.identifier = self.sequence_number
+        #     await self.send(data, keep_listening=True, debug=debug)
+        #     # Don't look for ACK from Broadcast message
+        #     if self.destination == _RH_BROADCAST_ADDRESS:
+        #         got_ack = True
+        #     else:
+        #         # wait for a packet from our destination
+        #         ack_packet = await self.receive(
+        #             timeout=self.ack_wait, with_header=True, debug=debug)
+        #         if ack_packet is not None:
+        #             if ack_packet[4] & _RH_FLAGS_ACK:
+        #                 # check the ID
+        #                 if ack_packet[3] == self.identifier:
+        #                     got_ack = True
+        #                     break
+        #             if debug:
+        #                 print(f"Invalid ACK packet {str(ack_packet)}")
+        #     # pause before next retry -- random delay
+        #     if not got_ack:
+        #         # delay by random amount before next try
+        #         await tasko.sleep(self.ack_wait * random.random())
+        #         if debug:
+        #             print(f"No ACK, retrying send - retries remaining: {retries_remaining}")
+        #     retries_remaining = retries_remaining - 1
+        #     # set retry flag in packet header
+        #     self.flags |= _RH_FLAGS_RETRY
+        # self.flags = 0  # clear flags
+        # return got_ack
+        return self.tx_device.send_with_ack(data)
 
     async def receive(
         self, *, keep_listening=True, with_header=False, with_ack=False, timeout=None, debug=False
