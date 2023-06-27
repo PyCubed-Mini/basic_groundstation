@@ -138,10 +138,30 @@ class Radiohead:
     def initialize_radio(self, spi, cs, reset):
         if self.protocol == "fsk":
             rfm_device = FSK_RFM9x(spi, cs, reset, rf_config.FREQUENCY)
+            rfm_device.bitrate = rf_config.BITRATE
+            rfm_device.frequency_deviation = rf_config.FREQUENCY_DEVIATION
+            rfm_device.rx_bandwidth = rf_config.RX_BANDWIDTH
+
         elif self.protocol == "lora":
             rfm_device = LoRa_RFM9x(spi, cs, reset, rf_config.FREQUENCY)
+            rfm_device.spreading_factor = rf_config.SPREADING_FACTOR
+            rfm_device.coding_rate = rf_config.CODING_RATE
+            rfm_device.signal_bandwidth = rf_config.SIGNAL_BANDWIDTH
+
         else:
             raise RuntimeError(f"unrecognized radio protocol: {self.protocol}")
+
+        rfm_device.dio0 = self.radio_DIO0
+
+        rfm_device.tx_power = rf_config.TX_POWER
+        rfm_device.preamble_length = rf_config.PREAMBLE_LENGTH
+        rfm_device.ack_delay = rf_config.ACK_DELAY
+        rfm_device.ack_wait = rf_config.ACK_WAIT
+        rfm_device.ack_retries = rf_config.ACK_RETRIES
+        rfm_device.receive_timeout = rf_config.RECEIVE_TIMEOUT
+        rfm_device.node = rf_config.SATELLITE_ID
+        rfm_device.destination = rf_config.GROUNDSTATION_ID
+
         return rfm_device
 
     def listen(self):
