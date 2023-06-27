@@ -2,7 +2,7 @@
 Defines the default settings used to configure the RFM9x satellite
 """
 
-PROTOCOL = "fsk"
+PROTOCOL = "lora"
 
 # FSK specific
 BITRATE = 1200  # bits per second

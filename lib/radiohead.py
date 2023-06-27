@@ -671,7 +671,7 @@ class Radiohead:
                                        identifier=identifier,
                                        flags=flags,
                                        debug=debug)
-        elif self.protocol == "LoRa":
+        elif self.protocol == "lora":
             return await self.LoRa_send(data,
                                         keep_listening=keep_listening,
                                         destination=destination,
