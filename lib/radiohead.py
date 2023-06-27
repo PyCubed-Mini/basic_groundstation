@@ -503,14 +503,14 @@ class Radiohead:
         timed_out = False
         if HAS_SUPERVISOR:
             start = supervisor.ticks_ms()
-            while not timed_out and not self.tx_done():
+            while not timed_out and not self.tx_device.tx_done():
                 if self.ticks_diff(supervisor.ticks_ms(), start) >= self.xmit_timeout * 1000:
                     timed_out = True
                 else:
                     await tasko.sleep(0)
         else:
             start = time.monotonic()
-            while not timed_out and not self.tx_done():
+            while not timed_out and not self.tx_device.tx_done():
                 if time.monotonic() - start >= self.xmit_timeout:
                     timed_out = True
                 else:
@@ -560,14 +560,14 @@ class Radiohead:
             timed_out = False
             if HAS_SUPERVISOR:
                 start = supervisor.ticks_ms()
-                while not timed_out and not self.rx_done():
+                while not timed_out and not self.rx_device.rx_done():
                     if self.ticks_diff(supervisor.ticks_ms(), start) >= timeout * 1000:
                         timed_out = True
                     else:
                         await tasko.sleep(0)
             else:
                 start = time.monotonic()
-                while not timed_out and not self.rx_done():
+                while not timed_out and not self.rx_device.rx_done():
                     if time.monotonic() - start >= timeout:
                         timed_out = True
                     else:

@@ -163,7 +163,7 @@ def print_rfm9x_configuration(device):
         print(f"\tRX filter bandwidth = {device.rx_bandwidth}")
         print(f"\tAFC enabled = {device.afc_enable}")
     elif rf_config.PROTOCOL == "lora":
-        print(f"\Spreading Factor = {device.spreading_factor}")
+        print(f"\tSpreading Factor = {device.spreading_factor}")
         print(f"\tCoding Rate = {device.coding_rate}")
         print(f"\tsignal_bandwidth = {device.signal_bandwidth}")
 
