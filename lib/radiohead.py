@@ -322,7 +322,7 @@ class Radiohead:
                 # Enter idle mode to stop receiving other packets.
                 self.idle()
                 # read packet
-                packet = await self._process_packet(with_header=with_header, with_ack=with_ack, debug=debug)
+                packet = await self.fsk_process_packet(with_header=with_header, with_ack=with_ack, debug=debug)
                 if packet is not None:
                     break  # packet valid - return it
                 # packet invalid - continue listening
@@ -571,6 +571,8 @@ class Radiohead:
                 while not timed_out and not self.rx_device.rx_done():
                     if self.ticks_diff(supervisor.ticks_ms(), start) >= timeout * 1000:
                         timed_out = True
+                        if debug:
+                            print("RFM9X: RX timed out")
                     else:
                         await tasko.sleep(0)
             else:
