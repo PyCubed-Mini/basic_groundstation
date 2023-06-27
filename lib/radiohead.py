@@ -665,19 +665,20 @@ class Radiohead:
     ) -> bool:
         if self.protocol == "fsk":
             return await self.fsk_send(data,
-                                       keep_listening,
-                                       destination,
-                                       node,
-                                       identifier,
-                                       flags,
-                                       debug)
+                                       keep_listening=keep_listening,
+                                       destination=destination,
+                                       node=node,
+                                       identifier=identifier,
+                                       flags=flags,
+                                       debug=debug)
         elif self.protocol == "LoRa":
             return await self.LoRa_send(data,
-                                        keep_listening,
-                                        destination,
-                                        identifier,
-                                        flags,
-                                        debug)
+                                        keep_listening=keep_listening,
+                                        destination=destination,
+                                        node=node,
+                                        identifier=identifier,
+                                        flags=identifier,
+                                        debug=debug)
 
     async def send_with_ack(self, data, debug=False):
         """Reliable Datagram mode:
