@@ -253,6 +253,8 @@ class RFM9x:
 
     lna_boost_hf = _RegisterBits(Constants._RH_RF95_REG_0C_LNA, offset=0, bits=2)
 
+    lna_gain = _RegisterBits(Constants._RH_RF95_REG_0C_LNA, offset=5, bits=3)
+
     auto_ifon = _RegisterBits(Constants._RH_RF95_DETECTION_OPTIMIZE, offset=7, bits=1)
 
     detection_optimize = _RegisterBits(Constants._RH_RF95_DETECTION_OPTIMIZE, offset=0, bits=3)
