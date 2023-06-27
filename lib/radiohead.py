@@ -679,7 +679,7 @@ class Radiohead:
                            flags,
                            debug)
 
-    async def fsk_send_with_ack(self, data, debug=False):
+    async def send_with_ack(self, data, debug=False):
         """Reliable Datagram mode:
         Send a packet with data and wait for an ACK response.
         The packet header is automatically generated.
