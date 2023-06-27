@@ -731,9 +731,16 @@ class Radiohead:
         debug: bool = False,
     ) -> Optional[bytearray]:
         if self.protocol == "fsk":
-            self.fsk_receive(keep_listening, with_header, with_ack, timeout, debug=debug)
+            self.fsk_receive(keep_listening=keep_listening,
+                             with_header=with_header,
+                             with_ack=with_ack,
+                             timeout=timeout,
+                             debug=debug)
         elif self.protocol == "lora":
-            self.LoRa_receive(keep_listening, with_ack, with_header, timeout)
+            self.LoRa_receive(keep_listening=keep_listening,
+                              with_ack=with_ack,
+                              with_header=with_header,
+                              timeout=timeout)
 
 
 def bsd_checksum(bytedata):
