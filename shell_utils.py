@@ -1,4 +1,4 @@
-from .lib.configuration import radio_configuration as rf_config
+from lib.configuration import radio_configuration as rf_config
 
 """
 A collection of functions for getting and validating inputs
