@@ -538,7 +538,8 @@ class Radiohead:
         keep_listening: bool = True,
         with_header: bool = False,
         with_ack: bool = False,
-        timeout: Optional[float] = None
+        timeout: Optional[float] = None,
+        debug: bool = True
     ) -> Optional[bytearray]:
         """Wait to receive a packet from the receiver. If a packet is found the payload bytes
         are returned, otherwise None is returned (which indicates the timeout elapsed with no
@@ -577,6 +578,8 @@ class Radiohead:
                 while not timed_out and not self.rx_device.rx_done():
                     if time.monotonic() - start >= timeout:
                         timed_out = True
+                        if debug:
+                            print("RFM9X: RX timed out")
                     else:
                         await tasko.sleep(0)
         # Payload ready is set, a packet is in the FIFO.
