@@ -12,14 +12,22 @@ from shell_utils import bold, normal
 
 
 def initialize_radio(tx_spi, tx_cs, tx_reset, rx_spi=None, rx_cs=None, rx_reset=None, rxtx_switch=None):
-    return radiohead.Radiohead(rf_config.PROTOCOL,
-                               tx_spi,
-                               tx_cs,
-                               tx_reset,
-                               rx_spi,
-                               rx_cs,
-                               rx_reset,
-                               rxtx_switch)
+    rh = radiohead.Radiohead(rf_config.PROTOCOL,
+                             tx_spi,
+                             tx_cs,
+                             tx_reset,
+                             rx_spi,
+                             rx_cs,
+                             rx_reset,
+                             rxtx_switch)
+
+    rh.ack_delay = rf_config.ACK_DELAY
+    rh.ack_wait = rf_config.ACK_WAIT
+    rh.receive_timeout = rf_config.RECEIVE_TIMEOUT
+    rh.node = rf_config.GROUNDSTATION_ID
+    rh.destination = rf_config.SATELLITE_ID
+
+    return rh
 
 def satellite_spi_config():
     # pocketqube
