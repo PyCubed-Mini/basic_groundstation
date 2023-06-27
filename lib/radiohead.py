@@ -186,13 +186,13 @@ class Radiohead:
         self,
         data,
         *,
-        keep_listening=False,
-        destination=None,
-        node=None,
-        identifier=None,
-        flags=None,
-        debug=False
-    ):
+        keep_listening: bool = False,
+        destination: Optional[int] = None,
+        node: Optional[int] = None,
+        identifier: Optional[int] = None,
+        flags: Optional[int] = None,
+        debug: bool = False
+    ) -> bool:
         """Send a string of data using the transmitter.
         You can only send 57 bytes at a time
         (limited by chip's FIFO size and appended headers).
@@ -664,20 +664,20 @@ class Radiohead:
         debug: bool = False
     ) -> bool:
         if self.protocol == "fsk":
-            self.fsk_send(data,
-                          keep_listening,
-                          destination,
-                          node,
-                          identifier,
-                          flags,
-                          debug)
+            return await self.fsk_send(data,
+                                       keep_listening,
+                                       destination,
+                                       node,
+                                       identifier,
+                                       flags,
+                                       debug)
         elif self.protocol == "LoRa":
-            self.LoRa_send(data,
-                           keep_listening,
-                           destination,
-                           identifier,
-                           flags,
-                           debug)
+            return await self.LoRa_send(data,
+                                        keep_listening,
+                                        destination,
+                                        identifier,
+                                        flags,
+                                        debug)
 
     async def send_with_ack(self, data, debug=False):
         """Reliable Datagram mode:
@@ -731,16 +731,16 @@ class Radiohead:
         debug: bool = False,
     ) -> Optional[bytearray]:
         if self.protocol == "fsk":
-            self.fsk_receive(keep_listening=keep_listening,
-                             with_header=with_header,
-                             with_ack=with_ack,
-                             timeout=timeout,
-                             debug=debug)
+            return await self.fsk_receive(keep_listening=keep_listening,
+                                          with_header=with_header,
+                                          with_ack=with_ack,
+                                          timeout=timeout,
+                                          debug=debug)
         elif self.protocol == "lora":
-            self.LoRa_receive(keep_listening=keep_listening,
-                              with_ack=with_ack,
-                              with_header=with_header,
-                              timeout=timeout)
+            return await self.LoRa_receive(keep_listening=keep_listening,
+                                           with_ack=with_ack,
+                                           with_header=with_header,
+                                           timeout=timeout)
 
 
 def bsd_checksum(bytedata):
