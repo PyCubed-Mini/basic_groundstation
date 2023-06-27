@@ -311,7 +311,7 @@ def handle_disk_buffered(header, data, response):
 
 
 def handle_image(header, data, response):
-    if header == headers.DISK_BUFFERED_START:
+    if header == headers.IMAGE_START:
         data.cmsg = response
         data.cmsg_last = response
         try:
@@ -331,5 +331,5 @@ def handle_image(header, data, response):
             print('Repeated payload')
         data.cmsg_last = response
 
-    if header == headers.DISK_BUFFERED_END:
+    if header == headers.IMAGE_END:
         data.cmsg_last = bytes([])
