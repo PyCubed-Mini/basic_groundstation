@@ -600,7 +600,6 @@ class Radiohead:
                 # Read the data from the FIFO.
                 # Read the length of the FIFO.
                 fifo_length = self.rx_device._read_u8(self.constants._RH_RF95_REG_13_RX_NB_BYTES)
-                print(fifo_length)
                 # Handle if the received packet is too small to include the 4 byte
                 # RadioHead header and at least one byte of data --reject this packet and ignore it.
                 if fifo_length > 0:  # read and clear the FIFO if anything in it
@@ -619,7 +618,6 @@ class Radiohead:
                         packet[1] != self.constants._RH_BROADCAST_ADDRESS and
                         packet[1] != self.node
                     ):
-                        print(f"node: {self.node} != {self.constants._RH_BROADCAST_ADDRESS} != {packet[1]}")
                         packet = None
                     # send ACK unless this was an ACK or a broadcast
                     elif (
@@ -633,13 +631,13 @@ class Radiohead:
                         # send ACK packet to sender (data is b'!')
                         await self.send(
                             b"!",
-                            destination=packet[1],
-                            node=packet[0],
-                            identifier=packet[2],
+                            destination=packet[2],
+                            node=packet[1],
+                            identifier=packet[3],
                             flags=(packet[4] | self.constants._RH_FLAGS_ACK),
                         )
                         # reject Retries if we have seen this idetifier from this source before
-                        if (self.seen_ids[packet[1]] == packet[2]) and (
+                        if (self.seen_ids[packet[2]] == packet[3]) and (
                             packet[4] & self.constants._RH_FLAGS_RETRY
                         ):
                             packet = None
@@ -690,7 +688,7 @@ class Radiohead:
                                         destination=destination,
                                         node=node,
                                         identifier=identifier,
-                                        flags=identifier,
+                                        flags=flags,
                                         debug=debug)
 
     async def send_with_ack(self, data, debug=False):
