@@ -727,10 +727,11 @@ class Radiohead:
         keep_listening: bool = True,
         with_header: bool = False,
         with_ack: bool = False,
-        timeout: Optional[float] = None
+        timeout: Optional[float] = None,
+        debug: bool = False,
     ) -> Optional[bytearray]:
         if self.protocol == "fsk":
-            self.fsk_receive(keep_listening, with_header, with_ack, timeout)
+            self.fsk_receive(keep_listening, with_header, with_ack, timeout, debug=debug)
         elif self.protocol == "lora":
             self.LoRa_receive(keep_listening, with_ack, with_header, timeout)
 
