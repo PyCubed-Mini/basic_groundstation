@@ -469,7 +469,7 @@ class Radiohead:
         # pylint: enable=len-as-condition
         self.idle()  # Stop receiving to clear FIFO and keep it clear.
         # Fill the FIFO with a packet to send.
-        self._write_u8(self.constants._RH_RF95_REG_0D_FIFO_ADDR_PTR, 0x00)  # FIFO starts at 0.
+        self.tx_device._write_u8(self.constants._RH_RF95_REG_0D_FIFO_ADDR_PTR, 0x00)  # FIFO starts at 0.
         # Combine header and data to form payload
         payload = bytearray(5)
         payload[0] = len(payload) + len(data)
@@ -500,9 +500,9 @@ class Radiohead:
             print(f"RFM9x: sending {str(payload)}")
 
         # Write payload.
-        self._write_from(self.constants._RH_RF95_REG_00_FIFO, payload)
+        self.tx_device._write_from(self.constants._RH_RF95_REG_00_FIFO, payload)
         # Write payload and header length.
-        self._write_u8(self.constants._RH_RF95_REG_22_PAYLOAD_LENGTH, len(payload))
+        self.tx_device._write_u8(self.constants._RH_RF95_REG_22_PAYLOAD_LENGTH, len(payload))
         # Turn on transmit mode to send out the packet.
         self.transmit()
         # Wait for tx done interrupt with explicit polling (not ideal but
@@ -529,7 +529,7 @@ class Radiohead:
             # Enter idle mode to stop receiving other packets.
             self.idle()
         # Clear interrupt.
-        self._write_u8(self.constants._RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
+        self.tx_device._write_u8(self.constants._RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
         return not timed_out
 
     async def LoRa_receive(
@@ -590,36 +590,36 @@ class Radiohead:
         # Enter idle mode to stop receiving other packets.
         self.idle()
         if not timed_out:
-            if self.enable_crc and self.crc_error():
-                self.crc_error_count += 1
+            if self.rx_device.enable_crc and self.rx_device.crc_error():
+                self.rx_device.crc_error_count += 1
             else:
                 # Read the data from the FIFO.
                 # Read the length of the FIFO.
-                fifo_length = self._read_u8(self.constants._RH_RF95_REG_13_RX_NB_BYTES)
+                fifo_length = self.rx_device._read_u8(self.constants._RH_RF95_REG_13_RX_NB_BYTES)
                 # Handle if the received packet is too small to include the 4 byte
                 # RadioHead header and at least one byte of data --reject this packet and ignore it.
                 if fifo_length > 0:  # read and clear the FIFO if anything in it
-                    current_addr = self._read_u8(self.constants._RH_RF95_REG_10_FIFO_RX_CURRENT_ADDR)
-                    self._write_u8(self.constants._RH_RF95_REG_0D_FIFO_ADDR_PTR, current_addr)
+                    current_addr = self.rx_device._read_u8(self.constants._RH_RF95_REG_10_FIFO_RX_CURRENT_ADDR)
+                    self.rx_device._write_u8(self.constants._RH_RF95_REG_0D_FIFO_ADDR_PTR, current_addr)
                     packet = bytearray(fifo_length)
                     # Read the packet.
-                    self._read_into(self.constants._RH_RF95_REG_00_FIFO, packet)
+                    self.rx_device._read_into(self.constants._RH_RF95_REG_00_FIFO, packet)
                 # Clear interrupt.
-                self._write_u8(self.constants._RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
+                self.rx_device._write_u8(self.constants._RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
                 if fifo_length < 5:
                     packet = None
                 else:
                     if (
-                        self.node != self.constants._RH_BROADCAST_ADDRESS
-                        and packet[1] != self.constants._RH_BROADCAST_ADDRESS
-                        and packet[1] != self.node
+                        self.node != self.constants._RH_BROADCAST_ADDRESS and
+                        packet[1] != self.constants._RH_BROADCAST_ADDRESS and
+                        packet[1] != self.node
                     ):
                         packet = None
                     # send ACK unless this was an ACK or a broadcast
                     elif (
-                        with_ack
-                        and ((packet[4] & self.constants._RH_FLAGS_ACK) == 0)
-                        and (packet[1] != self.constants._RH_BROADCAST_ADDRESS)
+                        with_ack and
+                        ((packet[4] & self.constants._RH_FLAGS_ACK) == 0) and
+                        (packet[1] != self.constants._RH_BROADCAST_ADDRESS)
                     ):
                         # delay before sending Ack to give receiver a chance to get ready
                         if self.ack_delay is not None:
@@ -650,7 +650,7 @@ class Radiohead:
             # Enter idle mode to stop receiving other packets.
             self.idle()
         # Clear interrupt.
-        self._write_u8(self.constants._RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
+        self.rx_device._write_u8(self.constants._RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
         return packet
 
     """
