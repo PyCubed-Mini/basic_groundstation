@@ -127,7 +127,6 @@ class Radiohead:
            operating mode has been changed.
         """
 
-
     def ticks_diff(self, ticks1, ticks2):
         """Compute the signed difference between two ticks values
         assuming that they are within 2**28 ticks
@@ -601,6 +600,7 @@ class Radiohead:
                 # Read the data from the FIFO.
                 # Read the length of the FIFO.
                 fifo_length = self.rx_device._read_u8(self.constants._RH_RF95_REG_13_RX_NB_BYTES)
+                print(fifo_length)
                 # Handle if the received packet is too small to include the 4 byte
                 # RadioHead header and at least one byte of data --reject this packet and ignore it.
                 if fifo_length > 0:  # read and clear the FIFO if anything in it
@@ -619,6 +619,7 @@ class Radiohead:
                         packet[1] != self.constants._RH_BROADCAST_ADDRESS and
                         packet[1] != self.node
                     ):
+                        print(f"node: {self.node} != {self.constants._RH_BROADCAST_ADDRESS} != {packet[1]}")
                         packet = None
                     # send ACK unless this was an ACK or a broadcast
                     elif (
