@@ -121,6 +121,13 @@ class Radiohead:
            operating mode has been changed.
         """
 
+        self.last_snr = 0.0
+        """The SNR of the last received packet. Stored when the packet was received.
+           The instantaneous SNR value may not be accurate once the
+           operating mode has been changed.
+        """
+
+
     def ticks_diff(self, ticks1, ticks2):
         """Compute the signed difference between two ticks values
         assuming that they are within 2**28 ticks
@@ -575,10 +582,10 @@ class Radiohead:
         # Payload ready is set, a packet is in the FIFO.
         packet = None
         # save last RSSI reading
-        self.last_rssi = self.rssi
+        self.last_rssi = self.rx_device.rssi
 
         # save the last SNR reading
-        self.last_snr = self.snr
+        self.last_snr = self.rx_device.snr
 
         # Enter idle mode to stop receiving other packets.
         self.idle()
