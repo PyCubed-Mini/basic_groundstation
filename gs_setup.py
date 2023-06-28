@@ -5,7 +5,6 @@ wait for packet, or send a command.
 import board
 import busio
 import digitalio
-from lib import pycubed_rfm9x_fsk
 from lib import radiohead
 from lib.configuration import radio_configuration as rf_config
 from shell_utils import bold, normal

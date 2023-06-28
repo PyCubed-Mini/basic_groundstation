@@ -1,7 +1,7 @@
 import random
 import time
 import tasko
-from lib.pycubed_rfm9x import (Constants as LoRa_Constants,
+from lib.pycubed_rfm9x_lora import (Constants as LoRa_Constants,
                                RFM9x as LoRa_RFM9x)
 from lib.pycubed_rfm9x_fsk import (Constants as FSK_Constants,
                                    RFM9x as FSK_RFM9x)
