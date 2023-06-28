@@ -668,7 +668,7 @@ class RFM9x:
     def check_data(self, data):
         assert 0 < len(data) <= 57
 
-    def get_packet_length(self):
+    def get_packet(self):
         packet = bytearray(Constants._MAX_FIFO_LENGTH)
         packet_length = self._read_until_flag(Constants._RH_RF95_REG_00_FIFO,
                                               packet,
