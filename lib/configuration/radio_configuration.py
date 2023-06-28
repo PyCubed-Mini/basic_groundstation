@@ -2,6 +2,7 @@
 Defines the default settings used to configure the RFM9x satellite
 """
 
+# either "lora" or "fsk"
 PROTOCOL = "lora"
 
 # FSK specific
@@ -14,6 +15,7 @@ SPREADING_FACTOR = 7
 SIGNAL_BANDWIDTH = 125000
 CODING_RATE = 5
 
+# shared between lora/fsk
 CHECKSUM = True
 TX_POWER = 23  # dB
 FREQUENCY = 433.0  # MHz
