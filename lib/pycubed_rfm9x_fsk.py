@@ -663,3 +663,9 @@ class RFM9x:
     def fifo_empty(self):
         """True when FIFO is empty"""
         return (self._read_u8(Constants._RH_RF95_REG_3F_IRQ_FLAGS_2) & (0b1 << 6)) >> 6
+
+    def write_payload(self, payload):
+        self._write_from(Constants._RH_RF95_REG_00_FIFO, payload)
+
+    def check_data(self, data):
+        assert 0 < len(data) <= 57

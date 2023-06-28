@@ -687,3 +687,12 @@ class RFM9x:
     def crc_error(self) -> bool:
         """crc status"""
         return (self._read_u8(Constants._RH_RF95_REG_12_IRQ_FLAGS) & 0x20) >> 5
+
+    def write_payload(self, payload) -> bool:
+        # Write payload.
+        self._write_from(Constants._RH_RF95_REG_00_FIFO, payload)
+        # Write payload and header length.
+        self._write_u8(Constants._RH_RF95_REG_22_PAYLOAD_LENGTH, len(payload))
+
+    def check_data(self, data):
+        assert 0 < len(data) <= 241

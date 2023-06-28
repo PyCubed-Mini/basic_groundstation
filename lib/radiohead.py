@@ -663,6 +663,34 @@ class Radiohead:
     ===========================================================================
     """
 
+    # async def send(
+    #     self,
+    #     data: ReadableBuffer,
+    #     *,
+    #     keep_listening: bool = False,
+    #     destination: Optional[int] = None,
+    #     node: Optional[int] = None,
+    #     identifier: Optional[int] = None,
+    #     flags: Optional[int] = None,
+    #     debug: bool = False
+    # ) -> bool:
+    #     if self.protocol == "fsk":
+    #         return await self.fsk_send(data,
+    #                                    keep_listening=keep_listening,
+    #                                    destination=destination,
+    #                                    node=node,
+    #                                    identifier=identifier,
+    #                                    flags=flags,
+    #                                    debug=debug)
+    #     elif self.protocol == "lora":
+    #         return await self.LoRa_send(data,
+    #                                     keep_listening=keep_listening,
+    #                                     destination=destination,
+    #                                     node=node,
+    #                                     identifier=identifier,
+    #                                     flags=flags,
+    #                                     debug=debug)
+
     async def send(
         self,
         data: ReadableBuffer,
@@ -674,22 +702,95 @@ class Radiohead:
         flags: Optional[int] = None,
         debug: bool = False
     ) -> bool:
-        if self.protocol == "fsk":
-            return await self.fsk_send(data,
-                                       keep_listening=keep_listening,
-                                       destination=destination,
-                                       node=node,
-                                       identifier=identifier,
-                                       flags=flags,
-                                       debug=debug)
-        elif self.protocol == "lora":
-            return await self.LoRa_send(data,
-                                        keep_listening=keep_listening,
-                                        destination=destination,
-                                        node=node,
-                                        identifier=identifier,
-                                        flags=flags,
-                                        debug=debug)
+        """Send a string of data using the transmitter.
+        You can only send 57 bytes at a time
+        (limited by chip's FIFO size and appended headers).
+        This prepends a 1 byte length to be compatible with the RFM9X fsk packet handler,
+        and 4 byte header to be compatible with the RadioHead library.
+        The header defaults to using the initialized attributes:
+        (destination, node, identifier, flags)
+        It may be temporarily overidden via the kwargs - destination, node, identifier, flags.
+        Values passed via kwargs do not alter the attribute settings.
+        The keep_listening argument should be set to True if you want to start listening
+        automatically after the packet is sent. The default setting is False.
+
+        Returns: True if success or False if the send timed out.
+        """
+        # Disable pylint warning to not use length as a check for zero.
+        # This is a puzzling warning as the below code is clearly the most
+        # efficient and proper way to ensure a precondition that the provided
+        # buffer be within an expected range of bounds. Disable this check.
+        # pylint: disable=len-as-condition
+        self.tx_device.check_data(data)
+
+        # pylint: enable=len-as-condition
+        self.idle()  # Stop receiving to clear FIFO and keep it clear.
+        if self.protocol == "lora":
+            # tells device that FIFO should start at 0.
+            # register is used different in fsk
+            self.tx_device._write_u8(self.constants._RH_RF95_REG_0D_FIFO_ADDR_PTR, 0x00)
+
+        # Combine header and data to form payload
+        payload = bytearray(5)
+        payload[0] = len(payload) + len(data) - 1  # first byte is length to meet semtech FSK requirements (pg 74)
+        if destination is None:  # use attribute
+            payload[1] = self.destination
+        else:  # use kwarg
+            payload[1] = destination
+        if node is None:  # use attribute
+            payload[2] = self.node
+        else:  # use kwarg
+            payload[2] = node
+        if identifier is None:  # use attribute
+            payload[3] = self.identifier
+        else:  # use kwarg
+            payload[3] = identifier
+        if flags is None:  # use attribute
+            payload[4] = self.flags
+        else:  # use kwarg
+            payload[4] = flags
+
+        payload = payload + data
+
+        if self.checksum:
+            payload[0] += 2
+            checksum = bsd_checksum(payload)
+            payload = payload + checksum
+
+        if debug:
+            print(f"RFM9X: Sending {str(payload)}")
+
+        # Write payload.
+        self.tx_device.write_payload(payload)
+
+        # Turn on transmit mode to send out the packet.
+        self.transmit()
+        # Wait for tx done interrupt with explicit polling (not ideal but
+        # best that can be done right now without interrupts).
+        timed_out = False
+        if HAS_SUPERVISOR:
+            start = supervisor.ticks_ms()
+            while not timed_out and not self.tx_device.tx_done():
+                if self.ticks_diff(supervisor.ticks_ms(), start) >= self.xmit_timeout * 1000:
+                    timed_out = True
+                else:
+                    await tasko.sleep(0)
+        else:
+            start = time.monotonic()
+            while not timed_out and not self.tx_device.tx_done():
+                if time.monotonic() - start >= self.xmit_timeout:
+                    timed_out = True
+                else:
+                    await tasko.sleep(0)
+        # Done transmitting - change modes (interrupt automatically cleared on mode change)
+        if keep_listening:
+            self.listen()
+        else:
+            # Enter idle mode to stop receiving other packets.
+            self.idle()
+        if self.protocol == "lora":
+            self.tx_device._write_u8(self.constants._RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
+        return not timed_out
 
     async def send_with_ack(self, data, debug=False):
         """Reliable Datagram mode:
