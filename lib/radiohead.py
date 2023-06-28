@@ -735,7 +735,6 @@ class Radiohead:
                     f"packet = {str(packet)}")
             return None
 
-        packet = packet[:packet_length]
         # Reject if the packet does not pass the checksum
         if self.checksum:
             if not bsd_checksum(packet[:-2]) == packet[-2:]:
