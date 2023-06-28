@@ -716,9 +716,7 @@ class Radiohead:
 
         # Read the data from the radio FIFO
         packet = bytearray(self.constants._MAX_FIFO_LENGTH)
-        packet_length = self.rx_device._read_until_flag(self.constants._RH_RF95_REG_00_FIFO,
-                                                        packet,
-                                                        self.rx_device.fifo_empty)
+        packet_length = self.rx_device.get_packet_length(packet)
 
         # Reject if the received packet is too small to include the 1 byte length, the
         # 4 byte RadioHead header and at least one byte of data

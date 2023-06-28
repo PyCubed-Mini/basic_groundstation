@@ -128,6 +128,8 @@ class Constants:
     _TICKS_MAX = const(_TICKS_PERIOD - 1)
     _TICKS_HALFPERIOD = const(_TICKS_PERIOD // 2)
 
+    _MAX_FIFO_LENGTH = 258
+
 # Disable the too many instance members warning.  Pylint has no knowledge
 # of the context and is merely guessing at the proper amount of members.  This
 # is a complex chip which requires exposing many attributes and state.  Disable
@@ -694,3 +696,6 @@ class RFM9x:
 
     def check_data(self, data):
         assert 0 < len(data) <= 241
+
+    def get_packet_length(self, packet):
+        return self._read_u8(Constants._RH_RF95_REG_13_RX_NB_BYTES)
