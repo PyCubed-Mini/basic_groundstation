@@ -715,8 +715,8 @@ class Radiohead:
     async def process_packet(self, with_header=False, with_ack=False, debug=False):
 
         # Read the data from the radio FIFO
-        packet = bytearray(self.constants._MAX_FIFO_LENGTH)
-        packet_length = self.rx_device.get_packet_length(packet)
+        packet = self.rx_device.get_packet()
+        packet_length = len(packet)
 
         # Reject if the received packet is too small to include the 1 byte length, the
         # 4 byte RadioHead header and at least one byte of data

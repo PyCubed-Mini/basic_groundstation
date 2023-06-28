@@ -697,5 +697,16 @@ class RFM9x:
     def check_data(self, data):
         assert 0 < len(data) <= 241
 
-    def get_packet_length(self, packet):
-        return self._read_u8(Constants._RH_RF95_REG_13_RX_NB_BYTES)
+    def get_packet(self):
+        # get length of data in FIFO
+        fifo_length = self._read_u8(Constants._RH_RF95_REG_13_RX_NB_BYTES)
+        # get start address of last packet in FIFO
+        current_addr = self._read_u8(Constants._RH_RF95_REG_10_FIFO_RX_CURRENT_ADDR)
+        # write to the pointer where we need to get data
+        self._write_u8(Constants._RH_RF95_REG_0D_FIFO_ADDR_PTR, current_addr)
+        # create a packet of fifo_length size
+        packet = bytearray(fifo_length)
+        # Read the packet.
+        self._read_into(Constants._RH_RF95_REG_00_FIFO, packet)
+
+        return packet
