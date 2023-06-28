@@ -7,7 +7,6 @@ import busio
 import digitalio
 from lib import radiohead
 from lib.configuration import radio_configuration as rf_config
-from shell_utils import bold, normal
 
 
 def initialize_radio(tx_spi, tx_cs, tx_reset, rx_spi=None, rx_cs=None, rx_reset=None, rxtx_switch=None):

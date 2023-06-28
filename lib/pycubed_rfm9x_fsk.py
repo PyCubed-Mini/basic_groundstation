@@ -15,11 +15,9 @@ http: www.airspayce.com/mikem/arduino/RadioHead/
 ====================================================
 Modified to use FSK in 2022 by Jacob Willis
 """
-import random
 import time
 import adafruit_bus_device.spi_device as spidev
 from micropython import const
-import tasko
 
 HAS_SUPERVISOR = False
 

@@ -12,11 +12,9 @@ http: www.airspayce.com/mikem/arduino/RadioHead/
 
 * Author(s): Tony DiCola, Jerry Needell
 """
-import random
 import time
 import adafruit_bus_device.spi_device as spidev
 from micropython import const
-import tasko
 
 HAS_SUPERVISOR = False
 
