@@ -708,5 +708,7 @@ class RFM9x:
         packet = bytearray(fifo_length)
         # Read the packet.
         self._read_into(Constants._RH_RF95_REG_00_FIFO, packet)
+        # Clear interrupt.
+        self._write_u8(Constants._RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
 
         return packet
