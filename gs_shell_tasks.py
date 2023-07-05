@@ -61,3 +61,11 @@ async def get_beacon(radio, debug=False, logname=""):
         timestamped_log_print(bs, logname=logname)
     else:
         timestamped_log_print(f"Failed beacon request", printcolor=red, logname=logname)
+
+async def get_image(radio, debug=False, logname=""):
+    timestamped_log_print("Requesting Image...", logname=logname)
+    success = await request_image(radio, debug=debug)
+    if success:
+        timestamped_log_print("Successful Image Request", printcolor=green, logname=logname)
+    else:
+        timestamped_log_print("Failed Image request", printcolor=red, logname=logname)

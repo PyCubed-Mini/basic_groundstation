@@ -117,6 +117,22 @@ async def request_beacon(radio, debug=False):
     else:
         return False, None
 
+async def request_image(radio, debug=False):
+    success, header, response = await send_command(
+        radio,
+        commands_by_name["REQUEST_IMAGE"]["bytes"],
+        "",
+        commands_by_name["REQUEST_IMAGE"]["will_respond"],
+        debug=debug
+    )
+
+    if (success and (header == headers.IMAGE_START or
+                     header == headers.IMAGE_MID or
+                     header == headers.IMAGE_END)):
+        return True
+    else:
+        return False
+
 
 async def set_time(radio, unix_time=None, debug=False):
     """ Update the real time clock on the satellite using either a given value or the system time"""
@@ -236,6 +252,12 @@ async def wait_for_message(radio, max_rx_fails=10, debug=False):
             handle_disk_buffered(oh, data, payload)
             if oh == headers.DISK_BUFFERED_END:
                 return headers.DISK_BUFFERED_START, data.cmsg
+
+        elif oh == headers.IMAGE_START or oh == headers.IMAGE_MID or oh == headers.IMAGE_END:
+            handle_image(oh, data, payload)
+            if oh == headers.IMAGE_END:
+                return headers.IMAGE_START, data.cmsg
+
         else:
             print(f"Unrecognized header {oh}")
             return oh, payload
@@ -299,5 +321,22 @@ def handle_disk_buffered(header, data, response):
             print('Repeated payload')
         data.cmsg_last = response
 
+    if header == headers.DISK_BUFFERED_END:
+        data.cmsg_last = bytes([])
+
+def handle_image(header, data, response):
+    if header == headers.IMAGE_START:
+        data.cmsg = response
+        data.cmsg_last = response
+        with open("sat_image.jpeg", "wb") as fd:
+            fd.write(response)
+    else:
+        if response != data.cmsg_last:
+            with open("sat_image.jpeg", "ab") as fd:
+                fd.write(response)
+            data.cmsg += response
+        else:
+            print("repeated payload")
+        data.cmsg_last = response
     if header == headers.DISK_BUFFERED_END:
         data.cmsg_last = bytes([])
