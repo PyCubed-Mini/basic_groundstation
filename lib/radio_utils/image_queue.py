@@ -3,10 +3,10 @@
 Messages must support the `__lt__`, `__le__`, `__eq__`, `__ge__`, and `__gt__` operators.
 This enables to the max heap to compare messages based on their priority.
 """
-from . import queue
+from .queue import Queue
 
 limit = 100
-image_queue = queue(limit)
+image_queue = Queue(limit)
 
 
 def enq(msg):
