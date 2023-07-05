@@ -201,7 +201,6 @@ class Radiohead:
         debug: bool = False
     ) -> bool:
         """Send a string of data using the transmitter.
-        You can only send 57 bytes at a time
         (limited by chip's FIFO size and appended headers).
         This prepends a 1 byte length to be compatible with the RFM9X fsk packet handler,
         and 4 byte header to be compatible with the RadioHead library.
@@ -214,14 +213,8 @@ class Radiohead:
 
         Returns: True if success or False if the send timed out.
         """
-        # Disable pylint warning to not use length as a check for zero.
-        # This is a puzzling warning as the below code is clearly the most
-        # efficient and proper way to ensure a precondition that the provided
-        # buffer be within an expected range of bounds. Disable this check.
-        # pylint: disable=len-as-condition
         self.tx_device.check_data(data)
 
-        # pylint: enable=len-as-condition
         self.idle()  # Stop receiving to clear FIFO and keep it clear.
         if self.protocol == "lora":
             # tells device that FIFO should start at 0.

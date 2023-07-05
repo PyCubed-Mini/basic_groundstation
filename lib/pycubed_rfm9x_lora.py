@@ -688,7 +688,7 @@ class RFM9x:
         """crc status"""
         return (self._read_u8(Constants._RH_RF95_REG_12_IRQ_FLAGS) & 0x20) >> 5
 
-    def write_payload(self, payload) -> bool:
+    def write_payload(self, payload) -> None:
         # Write payload.
         self._write_from(Constants._RH_RF95_REG_00_FIFO, payload)
         # Write payload and header length.
