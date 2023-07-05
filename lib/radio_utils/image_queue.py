@@ -38,13 +38,13 @@ def pop():
 
 def empty():
     """Returns if the transmission queue is empty"""
-    return iamge_queue.empty()
+    return image_queue.empty()
 
 
 def clear():
     """Clears the transmission queue"""
-    global iamge_queue
-    iamge_queue = queue(limit)
+    global image_queue
+    image_queue = Queue(limit)
 
 
 def size():
