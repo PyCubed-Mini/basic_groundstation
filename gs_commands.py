@@ -326,17 +326,23 @@ def handle_disk_buffered(header, data, response):
 
 def handle_image(header, data, response):
     if header == headers.IMAGE_START:
-        data.cmsg = response
-        data.cmsg_last = response
-        with open("sat_image.jpeg", "wb") as fd:
-            fd.write(response)
+        data.cmsg = response[1:response[1]]
+        data.cmsg_last = response[1:response[1]]
+        try:
+            with open("sat_image.jpeg", "wb") as fd:
+                fd.write(response[1:response[1]])
+        except Exception as e:
+            print(f"could not start create image file: {e}")            
     else:
         if response != data.cmsg_last:
-            with open("sat_image.jpeg", "ab") as fd:
-                fd.write(response)
-            data.cmsg += response
+            try:
+                with open("sat_image.jpeg", "ab") as fd:
+                    fd.write(response[1:response[1]])
+            except Exception as e:
+                print(f"could not write to image file: {e}")
+            data.cmsg += response[1:response[1]]
         else:
             print("repeated payload")
-        data.cmsg_last = response
+        data.cmsg_last = response[1:response[1]]
     if header == headers.DISK_BUFFERED_END:
         data.cmsg_last = bytes([])
