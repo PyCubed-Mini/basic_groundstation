@@ -344,5 +344,5 @@ def handle_image(header, data, response):
         else:
             print("repeated payload")
         data.cmsg_last = response[1:response[1]]
-    if header == headers.DISK_BUFFERED_END:
+    if header == headers.IMAGE_END:
         data.cmsg_last = bytes([])
