@@ -712,3 +712,19 @@ class RFM9x:
         self._write_u8(Constants._RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
 
         return packet
+
+    def write_fifo_start(self):
+        try:
+            self._write_u8(Constants._RH_RF95_REG_0D_FIFO_ADDR_PTR, 0x00)
+            return True
+        except Exception as e:
+            print(f"failed to write fifo start: {e}")
+            return False
+
+    def reset_irq_flags(self):
+        try:
+            self._write_u8(Constants._RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
+            return True
+        except Exception as e:
+            print(f"failed to reset irq flags: {e}")
+            return False

@@ -219,7 +219,7 @@ class Radiohead:
         if self.protocol == "lora":
             # tells device that FIFO should start at 0.
             # register is used different in fsk
-            self.tx_device._write_u8(self.constants._RH_RF95_REG_0D_FIFO_ADDR_PTR, 0x00)
+            self.tx_device.write_fifo_start()
 
         # Combine header and data to form payload
         payload = bytearray(5)
@@ -280,7 +280,7 @@ class Radiohead:
             # Enter idle mode to stop receiving other packets.
             self.idle()
         if self.protocol == "lora":
-            self.tx_device._write_u8(self.constants._RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
+            self.tx_device.reset_irq_flags()
         return not timed_out
 
     async def send_with_ack(self, data, debug=False):
