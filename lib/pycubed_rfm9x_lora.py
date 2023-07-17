@@ -688,16 +688,21 @@ class RFM9x:
         """crc status"""
         return (self._read_u8(Constants._RH_RF95_REG_12_IRQ_FLAGS) & 0x20) >> 5
 
-    def write_payload(self, payload) -> None:
-        # Write payload.
-        self._write_from(Constants._RH_RF95_REG_00_FIFO, payload)
-        # Write payload and header length.
-        self._write_u8(Constants._RH_RF95_REG_22_PAYLOAD_LENGTH, len(payload))
+    def write_payload(self, payload) -> bool:
+        try:
+            # Write payload.
+            self._write_from(Constants._RH_RF95_REG_00_FIFO, payload)
+            # Write payload and header length.
+            self._write_u8(Constants._RH_RF95_REG_22_PAYLOAD_LENGTH, len(payload))
+            return True
+        except Exception as e:
+            print(f"failed to write payload: {e}")
+            return False
 
     def check_data(self, data):
         assert 0 < len(data) <= 241
 
-    def get_packet(self):
+    def get_packet(self) -> bytearray:
         # get length of data in FIFO
         fifo_length = self._read_u8(Constants._RH_RF95_REG_13_RX_NB_BYTES)
         # get start address of last packet in FIFO
@@ -713,7 +718,7 @@ class RFM9x:
 
         return packet
 
-    def write_fifo_start(self):
+    def write_fifo_start(self) -> bool:
         try:
             self._write_u8(Constants._RH_RF95_REG_0D_FIFO_ADDR_PTR, 0x00)
             return True
@@ -721,7 +726,7 @@ class RFM9x:
             print(f"failed to write fifo start: {e}")
             return False
 
-    def reset_irq_flags(self):
+    def reset_irq_flags(self) -> bool:
         try:
             self._write_u8(Constants._RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
             return True
