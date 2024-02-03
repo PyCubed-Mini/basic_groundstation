@@ -37,6 +37,9 @@ async def send_command(radio, command_bytes, args, will_respond, max_rx_fails=30
             header, response = await wait_for_message(radio, max_rx_fails=max_rx_fails, debug=debug)
             if debug:
                 print_message(header, response)
+            # Possibly change to: 
+            #   success = header is not None
+            # Cleaner imho.
             if header is not None:
                 success = True
             else:
@@ -117,6 +120,21 @@ async def request_beacon(radio, debug=False):
     else:
         return False, None
 
+async def request_image(radio, debug=False):
+    # Never uses the response from send_command; Curious...?
+    success, header, response = await send_command(
+        radio,
+        commands_by_name["REQUEST_IMAGE"]["bytes"],
+        "",
+        commands_by_name["REQUEST_IMAGE"]["will_respond"],
+        debug=debug)
+    if success and (header == headers.IMAGE_START or 
+                    header == headers.IMAGE_MID or
+                    header == headers.IMAGE_END
+                    ):
+        return True
+    else:
+        return False
 
 async def set_time(radio, unix_time=None, debug=False):
     """ Update the real time clock on the satellite using either a given value or the system time"""
@@ -165,6 +183,7 @@ async def receive(rfm9x, with_ack=True, debug=False):
     packet = await rfm9x.receive(with_ack=with_ack, with_header=True, debug=debug)
     if packet is None:
         return None
+    # The header contains an extra byte because of the way both lora and fm9x work.
     return packet[0:6], packet[6:]
 
 
@@ -202,12 +221,14 @@ class _data:
         self.msg_last = bytes([])
         self.cmsg = bytes([])
         self.cmsg_last = bytes([])
+        self.current_time  = '' # Gets overwritten later on
 
 
 async def wait_for_message(radio, max_rx_fails=10, debug=False):
     data = _data()
 
     rx_fails = 0
+    # This while loop never goes over one iteration. Possibly irrelevant?
     while True:
         res = await receive(radio, debug=debug)
 
@@ -227,6 +248,7 @@ async def wait_for_message(radio, max_rx_fails=10, debug=False):
         oh = header[5]
         if oh == headers.DEFAULT or oh == headers.BEACON:
             return oh, payload
+        
         elif oh == headers.MEMORY_BUFFERED_START or oh == headers.MEMORY_BUFFERED_MID or oh == headers.MEMORY_BUFFERED_END:
             handle_memory_buffered(oh, data, payload)
             if oh == headers.MEMORY_BUFFERED_END:
@@ -236,6 +258,12 @@ async def wait_for_message(radio, max_rx_fails=10, debug=False):
             handle_disk_buffered(oh, data, payload)
             if oh == headers.DISK_BUFFERED_END:
                 return headers.DISK_BUFFERED_START, data.cmsg
+            
+        elif oh == headers.IMAGE_START or oh == headers.IMAGE_MID or oh == headers.IMAGE_END:
+            handle_image(oh, data, payload)
+            if oh == headers.IMAGE_END:
+                return headers.IMAGE_START, data.cmsg
+            
         else:
             print(f"Unrecognized header {oh}")
             return oh, payload
@@ -275,6 +303,10 @@ def beacon_str(beacon):
 
 
 def handle_memory_buffered(header, data, payload):
+    """ Receives files from the satellite that are from memory.
+    Mostly sensor data that can potentially be stored on a seperate
+    file stored in groundstation.
+    """
     if header == headers.MEMORY_BUFFERED_START:
         data.msg_last = payload
         data.msg = payload
@@ -289,6 +321,10 @@ def handle_memory_buffered(header, data, payload):
 
 
 def handle_disk_buffered(header, data, response):
+    """ Receives files from the satellite that are on the disk.
+    Potential idea is was to store the data from the satellite in 
+    a seperate file on the groundstation.
+    """
     if header == headers.DISK_BUFFERED_START:
         data.cmsg = response
         data.cmsg_last = response
@@ -301,3 +337,43 @@ def handle_disk_buffered(header, data, response):
 
     if header == headers.DISK_BUFFERED_END:
         data.cmsg_last = bytes([])
+
+
+# Potentially create some unit test for this
+def handle_image(header, data, payload):
+    """
+    Parameters:
+    ------------
+    header: int
+        specifically the header of the packet
+    data: _data 
+        Holds the collective data that was recieved from all the packets
+    payload: int
+        specifically the payload of the packet
+    """
+    if header == headers.IMAGE_START:
+        data.cmsg = payload
+        data.cmsg_last = payload
+        try:
+            # Time is in the format MM/DD/YY_HOUR:MIN:SEC
+            # Could possibly use glob to find the time of created file
+            data.current_time = time.strftime('%x_%X', time.localtime())
+            with open(f'{data.current_time}_satellite_image.jpeg', 'wb') as fd:
+                fd.write(payload)
+        except Exception as e:
+            print(f'Failed to write image: {e}')
+    else:
+        if payload != data.cmsg_last:
+            data.cmsg += payload
+            try:
+                with open(f'{data.current_time}_satellite_image.jpeg', 'ab') as fd:
+                    fd.write(payload)
+            except Exception as e:
+                print(f'Failed to write to image: {e}')
+        else:
+            print('Repeated payload')
+        data.cmsg_last = payload
+
+    # Possibly irrelavent?
+    if header == headers.IMAGE_END:
+        data.cmsg_last = bytes([]) # Sets cmsg_last back to nothing

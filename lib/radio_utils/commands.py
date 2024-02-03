@@ -8,9 +8,11 @@ import os
 from pycubed import cubesat
 import radio_utils
 from radio_utils import transmission_queue as tq
+from radio_utils import image_queue as iq
 from radio_utils import headers
 from radio_utils.disk_buffered_message import DiskBufferedMessage
 from radio_utils.memory_buffered_message import MemoryBufferedMessage
+from radio_utils.image_message import ImageMessage
 from radio_utils.message import Message
 import json
 import supervisor
@@ -36,6 +38,7 @@ SET_RTC_UTIME = b'\x00\x14'
 GET_RTC_UTIME = b'\x00\x15'
 SET_RTC = b'\x00\x16'
 CLEAR_TX_QUEUE = b'\x00\x17'
+REQUEST_IMAGE = b'\x00\x18'
 
 COMMAND_ERROR_PRIORITY = 9
 BEACON_PRIORITY = 10
@@ -165,6 +168,17 @@ def request_beacon(task):
     """
     _downlink_msg(beacon_packet(), header=headers.BEACON, priority=BEACON_PRIORITY, with_ack=False)
 
+def request_image(task):
+    """Request a jpeg image
+
+    :param task: The task that called this function
+    """
+    # get filepath to image in image_queue
+    filepath = iq.peek()
+    # make image message from this
+    image = ImageMessage(filepath)
+    tq.push(image)
+
 def get_rtc(task):
     """Get the RTC time"""
     _downlink_msg(_pack(tuple(cubesat.rtc.datetime)))
@@ -268,6 +282,7 @@ commands = {
     SET_RTC: {"function": set_rtc, "name": "SET_RTC", "will_respond": False, "has_args": True},
     SET_RTC_UTIME: {"function": set_rtc_utime, "name": "SET_RTC_UTIME", "will_respond": False, "has_args": True},
     CLEAR_TX_QUEUE: {"function": clear_tx_queue, "name": "CLEAR_TX_QUEUE", "will_respond": False, "has_args": False},
+    REQUEST_IMAGE: {"function": request_image, "name": "REQUEST_IMAGE", "will_respond": True, "has_args": False}
 }
 
 super_secret_code = b'p\xba\xb8C'

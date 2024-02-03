@@ -22,6 +22,7 @@ if supervisor is not None:
 
 prompt_options = {"Receive loop": ("r", "receive"),
                   "Beacon request loop": ("b", "beacon"),
+                  "Image request loop": ("i", "image"),
                   "Upload file": ("u", "upload"),
                   "Request file": ("rf", "request"),
                   "Send command": ("c", "command"),
@@ -114,6 +115,13 @@ def gs_shell_main_loop(radio):
                 logname = input("log file name (empty to not log) = ")
                 def get_beacon_noargs(): return get_beacon(radio, debug=verbose, logname=logname)
                 tasko.schedule(beacon_frequency_hz, get_beacon_noargs, 10)
+                tasko.run()
+
+            elif choice in prompt_options["Image request loop"]:
+                image_period = get_input_range("Request period (seconds)", (120, 1000), allow_default=False)
+                image_frequency_hz = 1.0 / float(image_period)
+                def get_image_noargs(): return get_image(radio, debug=verbose)
+                tasko.schedule(image_frequency_hz, get_image_noargs, 10)
                 tasko.run()
 
             elif choice in prompt_options["Upload file"]:
